@@ -1,0 +1,1902 @@
+Ты — senior software architect, senior Python engineer и senior full-stack engineer.
+Нужно с нуля спроектировать и реализовать рабочий MVP проекта:
+Delta Digital Ecosystem
+Короткое название:
+Delta
+Основной символ бренда:
+Δ
+Проект должен быть реально запускаемым, демонстрируемым и архитектурно подготовленным к дальнейшему расширению.
+Главная задача — не создать очередного чат-бота и не сделать набор несвязанных CRUD-сервисов.
+Мы создаём локально-ориентированную персональную AI-экосистему, которая объединяет:
+	•	компьютеры пользователя;
+	•	голосовой интерфейс;
+	•	LLM;
+	•	рабочие пространства;
+	•	независимые цифровые сервисы;
+	•	задачи;
+	•	пользовательский контекст;
+	•	в будущем IoT;
+	•	Raspberry Pi;
+	•	внешние API;
+	•	автоматизации;
+	•	локальные приложения;
+	•	данные пользователя.
+
+1. Главная идея Delta
+Пользователь может работать на разных устройствах:
+	•	Windows;
+	•	macOS;
+	•	Linux;
+	•	в будущем Raspberry Pi.
+На каждом компьютере работает небольшой Delta Agent.
+Есть центральное ядро:
+Delta Core.
+Пользователь взаимодействует с системой:
+	•	голосом;
+	•	текстом;
+	•	через Delta Control Center.
+Delta должна воспринимать сервисы и устройства как единую экосистему.
+Примеры пользовательских команд:
+«Какие компьютеры сейчас подключены?»
+«Открой диплом на MacBook.»
+«Добавь задачу протестировать API до пятницы.»
+«Покажи задачи по дипломной работе.»
+«Открой рабочее пространство Dark Weather на этом компьютере.»
+«Включи рабочий свет.»
+В будущем:
+«Какая завтра погода?»
+«Продолжим проект на другом компьютере.»
+«Когда я начинаю работать вечером, включай рабочий режим.»
+«Найди документ, где я описывал MQTT.»
+
+2. Какую проблему решает Delta
+У пользователя рабочий контекст разбросан между:
+	•	разными компьютерами;
+	•	разными ОС;
+	•	приложениями;
+	•	файлами;
+	•	задачами;
+	•	веб-сервисами;
+	•	IoT-устройствами;
+	•	внешними API.
+Для продолжения работы пользователь вручную:
+	•	открывает нужный компьютер;
+	•	ищет папки;
+	•	запускает приложения;
+	•	открывает сайты;
+	•	вспоминает задачи;
+	•	переключается между сервисами.
+Delta должна создать единый слой управления поверх существующих систем.
+Главная идея:
+пользователь задаёт намерение естественным языком, а Delta выбирает устройство, сервис и действие.
+
+3. Основная архитектурная гипотеза
+Необходимо доказать:
+единый AI-интерфейс может через естественный язык управлять несколькими компьютерами и независимыми сервисами, при этом новые сервисы могут подключаться без серьёзного изменения Assistant Core.
+Схема:
+User
+↓
+Voice / Text
+↓
+Delta Core
+↓
+LLM
+↓
+Tool Router
+↓
+Service Registry
+↓
+Target Service / Device
+↓
+Structured Result
+↓
+Assistant Response
+↓
+TTS
+↓
+User
+
+4. Архитектурный принцип
+LLM НЕ содержит бизнес-логику.
+LLM не работает напрямую:
+	•	с PostgreSQL;
+	•	с файловой системой;
+	•	с shell;
+	•	с Task DB;
+	•	с устройствами.
+LLM только выбирает разрешённый Tool.
+Пример:
+User:
+«Добавь задачу протестировать API.»
+LLM:
+tasks.create
+arguments:
+{ "title": "Протестировать API" }
+Delta Core:
+↓
+Task Service API
+↓
+Task создана
+↓
+Delta отвечает пользователю.
+
+5. Главная особенность архитектуры — расширяемые сервисы
+Сегодня в MVP существует:
+Delta Tasks.
+Позже должны легко подключаться:
+	•	Delta Weather;
+	•	Delta Calendar;
+	•	Delta Notes;
+	•	Delta Files;
+	•	Delta Music;
+	•	Delta IoT;
+	•	Delta Automation;
+	•	Delta Notifications;
+	•	Dark Weather;
+	•	другие сервисы.
+Добавление нового сервиса не должно требовать переписывания Delta Core.
+Для этого обязателен:
+Service Registry
+и
+Tool Registry.
+
+6. MVP v0.1
+MVP обязан включать:
+	1	Delta Core.
+	2	Delta Agent.
+	3	Delta Control Center.
+	4	голосовой ввод.
+	5	Speech-to-Text.
+	6	Text-to-Speech.
+	7	текстовый Assistant.
+	8	OpenRouter integration.
+	9	Mock LLM.
+	10	Tool Calling.
+	11	Tool Registry.
+	12	Service Registry.
+	13	Device Registry.
+	14	подключение нескольких компьютеров.
+	15	WebSocket между Agent и Core.
+	16	Workspaces.
+	17	Workspace Device Bindings.
+	18	Workspace Launch.
+	19	отдельный Task Manager Microservice.
+	20	Activity Log.
+	21	Services Dashboard.
+	22	Virtual IoT.
+	23	PostgreSQL.
+	24	Docker Compose.
+	25	tests.
+	26	архитектурную документацию.
+	27	тёмный Delta UI.
+
+7. Что НЕ входит в MVP
+Не реализовывать сейчас:
+	•	wake word;
+	•	постоянное прослушивание микрофона;
+	•	Raspberry Pi;
+	•	реальный MQTT;
+	•	реальные IoT-датчики;
+	•	Dark Weather;
+	•	Weather Service;
+	•	Calendar Service;
+	•	Notes Service;
+	•	файловую семантическую индексацию;
+	•	RAG;
+	•	embeddings;
+	•	собственную LLM;
+	•	мобильное приложение;
+	•	Kubernetes;
+	•	Kafka;
+	•	RabbitMQ;
+	•	сложную distributed architecture;
+	•	полноценный IAM;
+	•	OAuth;
+	•	payment system;
+	•	marketplace;
+	•	computer vision;
+	•	полноценный enterprise task manager;
+	•	полный Home Assistant аналог.
+
+8. Technology Stack
+Delta Core
+Python 3.12+
+FastAPI
+Pydantic
+SQLAlchemy 2
+Alembic
+httpx
+WebSocket
+PostgreSQL
+Delta Tasks
+Python 3.12+
+FastAPI
+SQLAlchemy
+Alembic
+PostgreSQL
+Delta Agent
+Python 3.12+
+WebSocket client
+Delta Control Center
+React
+TypeScript
+Vite
+LLM
+OpenRouter.
+Создать abstraction:
+LLMProvider.
+Реализации:
+OpenRouterLLMProvider
+MockLLMProvider.
+Speech-to-Text
+Локальный STT.
+Создать abstraction:
+STTProvider.
+Реализации:
+WhisperSTTProvider
+MockSTTProvider.
+Предпочтительно использовать:
+faster-whisper
+или другую практичную локальную Whisper-реализацию.
+Text-to-Speech
+Создать abstraction:
+TTSProvider.
+Основная реализация:
+PiperTTSProvider.
+Fallback:
+MockTTSProvider.
+Infrastructure
+Docker Compose.
+
+9. Структура репозитория
+Предпочтительная структура:
+delta-digital-ecosystem/
+apps/
+delta-core/
+
+delta-tasks/
+
+delta-agent/
+
+delta-control-center/
+shared/
+contracts/
+docs/
+docker/
+docker-compose.yml
+README.md
+AGENTS.md
+.env.example
+
+10. Delta Core
+Delta Core отвечает за:
+	•	Assistant;
+	•	Voice Pipeline;
+	•	LLM;
+	•	Tool Registry;
+	•	Service Registry;
+	•	Device Registry;
+	•	Workspaces;
+	•	Workspace Launch;
+	•	command dispatch;
+	•	WebSocket с Agents;
+	•	Activity Log;
+	•	Virtual IoT;
+	•	Assistant History;
+	•	integrations.
+Предпочтительная структура:
+delta-core/app/
+assistant/
+
+voice/
+
+llm/
+
+tools/
+
+services/
+
+devices/
+
+commands/
+
+workspaces/
+
+activity/
+
+iot/
+
+common/
+Delta Core пока является modular monolith.
+
+11. Delta Tasks
+Task Manager — отдельный настоящий микросервис.
+Он НЕ должен находиться внутри Delta Core.
+Delta Core взаимодействует с ним только через HTTP API.
+Delta Core НЕ должен напрямую читать таблицы Delta Tasks.
+Delta Tasks НЕ должен читать таблицы Delta Core.
+
+12. Task Model
+Task:
+	•	id;
+	•	title;
+	•	description;
+	•	workspace_id nullable;
+	•	status;
+	•	priority;
+	•	due_date nullable;
+	•	created_at;
+	•	updated_at;
+	•	completed_at nullable.
+Status:
+	•	todo;
+	•	in_progress;
+	•	done.
+Priority:
+	•	low;
+	•	medium;
+	•	high.
+
+13. Delta Tasks API
+Минимально:
+GET /health
+GET /api/v1/tasks
+POST /api/v1/tasks
+GET /api/v1/tasks/{id}
+PATCH /api/v1/tasks/{id}
+DELETE /api/v1/tasks/{id}
+POST /api/v1/tasks/{id}/complete
+Фильтрация:
+workspace_id
+status
+priority.
+
+14. Task Tools
+Delta Core должен видеть tools:
+tasks.create
+tasks.list
+tasks.get
+tasks.update
+tasks.complete
+tasks.delete.
+Пример:
+tasks.create
+input:
+{ "title": "Протестировать API", "workspace_id": "...", "priority": "high", "due_date": "..." }
+
+15. Service Registry
+Service Registry — критическая часть проекта.
+Каждый сервис должен иметь:
+	•	service_id;
+	•	name;
+	•	version;
+	•	base_url;
+	•	health_url;
+	•	enabled;
+	•	status;
+	•	last_health_check;
+	•	available_tools.
+Пример:
+service_id:
+delta-tasks
+name:
+Delta Tasks
+version:
+0.1.0
+tools:
+tasks.create
+tasks.list
+tasks.get
+tasks.update
+tasks.complete
+tasks.delete.
+
+16. Service Manifest
+Поддержать manifest для сервиса.
+Пример:
+{ "service_id": "delta-tasks", "name": "Delta Tasks", "version": "0.1.0", "description": "Task management service", "health_url": "/health", "tools": [ { "name": "tasks.create", "description": "Create task" } ] }
+Для MVP можно регистрировать сервисы через config.
+Но architecture должна позволять динамическую регистрацию позже.
+
+17. Tool Registry
+Создать универсальный Tool abstraction.
+Tool должен иметь:
+	•	name;
+	•	description;
+	•	input_schema;
+	•	service_id;
+	•	handler / adapter;
+	•	permissions metadata;
+	•	enabled.
+LLM должен получать только доступные tools.
+
+18. Добавление будущих сервисов
+Архитектура считается неправильной, если для добавления Weather Service придётся переписывать Delta Core.
+Будущий Weather Service должен подключаться примерно так:
+service_id:
+delta-weather
+tools:
+weather.current
+weather.forecast
+weather.outfit_recommendation.
+Delta Core:
+	•	регистрирует сервис;
+	•	получает tools;
+	•	передаёт их LLM;
+	•	вызывает API;
+	•	возвращает результат Assistant.
+Никакого Weather Service сейчас не реализовывать.
+
+19. Delta Agent
+Delta Agent — отдельное приложение, которое запускается на компьютере пользователя.
+Поддержать:
+	•	Windows;
+	•	macOS;
+	•	Linux.
+Agent должен автоматически определять:
+	•	device_uid;
+	•	hostname;
+	•	OS;
+	•	architecture;
+	•	username;
+	•	agent_version;
+	•	capabilities.
+
+20. Delta Agent Responsibilities
+При запуске Agent:
+	1	загрузить config;
+	2	определить OS;
+	3	определить architecture;
+	4	определить hostname;
+	5	определить capabilities;
+	6	подключиться к Delta Core;
+	7	зарегистрировать Device;
+	8	поддерживать WebSocket;
+	9	отправлять heartbeat;
+	10	принимать command;
+	11	проверять action allowlist;
+	12	выполнять command;
+	13	возвращать structured result.
+
+21. Device Capabilities
+Минимальные capabilities MVP:
+system_info
+open_url
+open_path
+open_app.
+Дополнительно допустимо:
+volume_control.
+Не добавлять arbitrary command execution.
+
+22. Security Delta Agent
+КРИТИЧЕСКИ ВАЖНО.
+Никаких:
+execute_shell(command)
+run_python(code)
+eval()
+exec()
+remote arbitrary command.
+Нельзя разрешать LLM выполнять произвольные shell-команды.
+Agent работает только через predefined capabilities.
+
+23. Platform Adapters
+Вся OS-specific логика должна находиться в platform layer.
+Структура:
+delta-agent/
+platforms/
+
+    base.py
+
+    windows.py
+
+    macos.py
+
+    linux.py
+Нельзя размазывать:
+if sys.platform
+по всему Agent.
+
+24. Platform Operations
+BasePlatformAdapter должен иметь методы вроде:
+get_system_info()
+open_url(url)
+open_path(path)
+open_app(app_id).
+Реализации:
+WindowsPlatformAdapter
+MacOSPlatformAdapter
+LinuxPlatformAdapter.
+
+25. App identifiers
+Не передавать произвольные executable paths через Assistant.
+Использовать logical identifiers.
+Например:
+vscode
+browser.
+Agent сам определяет способ запуска.
+
+26. Agent WebSocket Protocol
+JSON protocol.
+Типы сообщений:
+register
+register_ack
+heartbeat
+command
+command_result
+capabilities_update
+error.
+Пример command:
+{ "type": "command", "command_id": "uuid", "action": "open_url", "payload": { "url": "https://example.com" } }
+Result:
+{ "type": "command_result", "command_id": "uuid", "success": true, "message": "URL opened" }
+
+27. Heartbeat
+Agent отправляет heartbeat через определённый interval.
+Delta Core хранит:
+last_seen.
+Если heartbeat давно отсутствует:
+Device status = OFFLINE.
+Порог вынести в config.
+
+28. Device Model
+Device:
+	•	id;
+	•	device_uid;
+	•	display_name;
+	•	hostname;
+	•	os;
+	•	architecture;
+	•	username;
+	•	agent_version;
+	•	capabilities;
+	•	status;
+	•	last_seen;
+	•	created_at;
+	•	updated_at.
+OS:
+windows
+macos
+linux
+unknown.
+Status:
+online
+offline.
+
+29. Device Dashboard
+Delta Control Center должен показывать подключённые устройства.
+Карточка:
+MacBook Air
+● ONLINE
+macOS · arm64
+Last seen: now
+Capabilities:
+Apps
+Files
+Browser
+System Info.
+
+30. Device Details
+Страница устройства:
+	•	display name;
+	•	hostname;
+	•	OS;
+	•	architecture;
+	•	agent version;
+	•	username;
+	•	capabilities;
+	•	last heartbeat;
+	•	status;
+	•	recent commands;
+	•	recent results.
+Тестовые действия:
+Get System Info
+Open Example URL.
+
+31. Workspaces
+Workspace — одна из центральных бизнес-сущностей.
+Workspace:
+	•	id;
+	•	name;
+	•	description;
+	•	created_at;
+	•	updated_at.
+Примеры:
+Master Thesis
+Dark Weather
+University
+Development
+Music.
+
+32. Workspace Device Binding
+Workspace не должен зависеть от конкретной ОС.
+Для каждого устройства создаётся WorkspaceDeviceBinding.
+Поля:
+	•	id;
+	•	workspace_id;
+	•	device_id;
+	•	local_path;
+	•	apps;
+	•	urls;
+	•	created_at;
+	•	updated_at.
+Пример:
+Workspace:
+Dark Weather
+MacBook:
+local_path:
+/Users/user/Projects/DWv2_0401
+apps:
+["vscode"]
+urls:
+["http://localhost:8000/docs"]
+Windows PC:
+local_path:
+C:\Projects\DWv2_0401
+apps:
+["vscode"]
+urls:
+["http://localhost:8000/docs"]
+
+33. Workspace Launch
+Operation:
+workspaces.launch
+Arguments:
+workspace_id / workspace_name
+device_id / device_name.
+Delta Core:
+	1	находит Workspace;
+	2	определяет Device;
+	3	проверяет Device online;
+	4	находит Binding;
+	5	проверяет capabilities;
+	6	отправляет Agent команды;
+	7	открывает apps;
+	8	открывает local_path;
+	9	открывает urls;
+	10	собирает command results;
+	11	создаёт Activity Events;
+	12	возвращает structured result.
+
+34. Current Device Context
+Для команд вида:
+«Открой диплом на этом компьютере»
+Assistant должен уметь определить current device.
+Для MVP current device можно передавать с frontend session.
+Не строить сложную identity infrastructure.
+
+35. Workspace Voice Scenario
+Пользователь нажимает микрофон и говорит:
+«Открой Dark Weather на этом компьютере.»
+STT:
+↓
+text.
+Assistant:
+↓
+LLM.
+LLM:
+↓
+workspaces.launch.
+Core:
+↓
+Agent.
+Agent:
+↓
+открывает VS Code и project path.
+Core:
+↓
+Assistant response.
+TTS:
+↓
+«Рабочее пространство Dark Weather открыто.»
+
+36. Voice Pipeline
+Голос — ОБЯЗАТЕЛЬНАЯ часть MVP.
+Pipeline:
+Microphone
+↓
+Browser Audio Recording
+↓
+Delta Core
+↓
+STT
+↓
+Transcript
+↓
+Assistant
+↓
+LLM
+↓
+Tool Calling
+↓
+Service / Agent
+↓
+Result
+↓
+Assistant Response
+↓
+TTS
+↓
+Browser Audio Playback.
+
+37. Voice Interaction
+Wake Word НЕ делать.
+Использовать Push-To-Talk.
+В интерфейсе:
+microphone button.
+Допустимо:
+Click to speak
+или
+Hold to talk.
+
+38. Voice API
+Создать:
+POST /api/v1/assistant/voice.
+Принимает audio file.
+Возвращает:
+{ "transcript": "...", "assistant_text": "...", "tool_calls": [], "tool_results": [], "audio_available": true }
+Допустимо возвращать TTS audio отдельным endpoint или binary response architecture.
+Выбрать простое решение.
+
+39. Text Assistant
+Создать:
+POST /api/v1/assistant/message.
+Input:
+{ "message": "...", "device_id": "optional" }
+Output:
+{ "assistant_text": "...", "tool_calls": [...], "tool_results": [...] }
+
+40. STT Provider Abstraction
+Создать:
+STTProvider.
+Метод:
+transcribe(audio) -> transcript.
+Реализации:
+WhisperSTTProvider
+MockSTTProvider.
+
+41. STT Requirements
+STT должен работать локально.
+Не использовать платный cloud STT как обязательную зависимость.
+Если Whisper unavailable:
+Voice endpoint должен вернуть понятную ошибку.
+Text Assistant продолжает работать.
+
+42. TTS Provider Abstraction
+Создать:
+TTSProvider.
+Метод:
+synthesize(text) -> audio.
+Реализации:
+PiperTTSProvider
+MockTTSProvider.
+
+43. TTS Requirements
+Основная реализация:
+Piper.
+Если Piper недоступен:
+Assistant продолжает работать текстом.
+Frontend показывает, что voice output unavailable.
+
+44. LLM Provider Abstraction
+Создать:
+LLMProvider.
+Реализации:
+OpenRouterLLMProvider
+MockLLMProvider.
+Config:
+OPENROUTER_API_KEY
+OPENROUTER_MODEL.
+Никаких hardcoded keys.
+
+45. Mock LLM
+Проект должен запускаться без OpenRouter.
+Mock должен понимать минимум:
+«покажи устройства»
+«покажи сервисы»
+«покажи задачи»
+«добавь задачу протестировать API»
+«открой Dark Weather»
+«открой диплом»
+«включи свет»
+«какая температура».
+Mock нужен для:
+	•	demo;
+	•	tests;
+	•	разработки без API.
+
+46. Assistant Tool Calling
+Assistant не должен использовать свободный текст для выполнения действий.
+Action всегда:
+Tool name
+	•	 
+validated arguments.
+Пример:
+{ "tool": "tasks.create", "arguments": { "title": "Протестировать API" } }
+Перед выполнением:
+Pydantic validation.
+
+47. Assistant History
+Хранить:
+	•	user message;
+	•	assistant response;
+	•	tool name;
+	•	tool arguments;
+	•	tool result;
+	•	device context;
+	•	timestamp.
+Не делать long-term semantic memory в MVP.
+
+48. Activity Log
+ActivityEvent:
+	•	id;
+	•	event_type;
+	•	source;
+	•	device_id nullable;
+	•	workspace_id nullable;
+	•	service_id nullable;
+	•	message;
+	•	metadata JSON;
+	•	created_at.
+Логировать:
+DEVICE_CONNECTED
+DEVICE_OFFLINE
+HEARTBEAT
+VOICE_REQUEST
+STT_COMPLETED
+ASSISTANT_REQUEST
+TOOL_SELECTED
+TOOL_COMPLETED
+TASK_CREATED
+TASK_UPDATED
+WORKSPACE_LAUNCHED
+COMMAND_SENT
+COMMAND_COMPLETED
+SERVICE_ONLINE
+SERVICE_OFFLINE
+IOT_ACTION.
+Не обязательно отображать HEARTBEAT в пользовательском Activity feed.
+
+49. Virtual IoT
+Поскольку Raspberry Pi пока нет, IoT эмулировать.
+Создать:
+IoTAdapter.
+Implementation:
+VirtualIoTAdapter.
+State:
+{ "desk_light": false, "temperature": 23.0, "brightness": 30, "motion": true }
+Tools:
+iot.get_temperature
+iot.get_brightness
+iot.get_motion
+iot.set_light.
+
+50. IoT Architecture
+Assistant не должен знать, виртуальное устройство или настоящее.
+Сейчас:
+VirtualIoTAdapter.
+Позже:
+MQTTIoTAdapter.
+Бизнес-логика не должна меняться.
+
+51. Future Raspberry Pi
+Не реализовывать сейчас.
+В architecture docs показать:
+Delta Core
+↓
+MQTT / Mosquitto
+↓
+Raspberry Pi
+↓
+Sensors / GPIO / Relays.
+
+52. PostgreSQL
+Использовать PostgreSQL.
+Можно использовать одну PostgreSQL instance в Docker Compose.
+Но:
+Delta Core data
+и
+Delta Tasks data
+должны быть логически разделены.
+Допустимо:
+separate databases
+или separate schemas.
+Delta Core не читает Task DB напрямую.
+
+53. Docker Compose
+docker compose должен запускать:
+	•	delta-core;
+	•	delta-tasks;
+	•	postgres;
+	•	delta-control-center.
+Delta Agent НЕ запускать в Docker.
+Agent запускается на хостовой ОС, потому что должен управлять desktop environment.
+
+54. Health Checks
+Каждый сервис:
+GET /health.
+Delta Core регулярно проверяет сервисы.
+Service status:
+ONLINE
+OFFLINE
+DEGRADED optional.
+
+55. Error Model
+Structured errors.
+Пример:
+{ "success": false, "error_code": "DEVICE_OFFLINE", "message": "Target device is offline" }
+Поддержать:
+DEVICE_OFFLINE
+DEVICE_NOT_FOUND
+WORKSPACE_NOT_FOUND
+WORKSPACE_BINDING_NOT_FOUND
+CAPABILITY_NOT_SUPPORTED
+SERVICE_UNAVAILABLE
+TOOL_NOT_FOUND
+TOOL_VALIDATION_ERROR
+STT_UNAVAILABLE
+TTS_UNAVAILABLE
+LLM_UNAVAILABLE.
+
+56. Logging
+Использовать structured logging.
+Логировать:
+request_id
+command_id
+device_id
+service_id
+tool
+duration_ms
+success
+error_code.
+Не логировать:
+API keys
+passwords
+sensitive auth tokens.
+
+57. Delta Control Center
+Web Dashboard должен стать центральным интерфейсом экосистемы.
+Основной layout:
+Left Sidebar
+	•	 
+Main Content Area.
+Допустим contextual right panel.
+
+58. Branding
+Название:
+Delta Digital Ecosystem.
+Short name:
+Delta.
+Brand symbol:
+Δ.
+Основной wordmark:
+Δ DELTA.
+Не использовать сложный иллюстративный логотип.
+
+59. Frontend Visual Direction
+Frontend DARK-FIRST.
+Нужен:
+	•	серьёзный;
+	•	строгий;
+	•	технологичный;
+	•	минималистичный;
+	•	premium-looking интерфейс.
+Визуальное направление:
+современные AI-продукты и developer tools уровня Grok/X, Linear, Raycast и похожих продуктов.
+НЕ копировать какой-либо интерфейс один в один.
+Использовать только направление по:
+	•	минимализму;
+	•	плотности;
+	•	типографике;
+	•	dark aesthetic;
+	•	ощущению технического продукта.
+
+60. Цветовая система
+Основной фон:
+near-black.
+Surface:
+dark graphite.
+Secondary surface:
+slightly lighter graphite.
+Primary text:
+almost white.
+Secondary text:
+muted gray.
+Использовать один основной accent color умеренно.
+Не превращать UI в цветной BI dashboard.
+
+61. Status Colors
+ONLINE / SUCCESS:
+спокойный green indicator.
+OFFLINE / ERROR:
+muted red.
+WARNING:
+amber.
+Status color используется как indicator, а не как огромный фон.
+
+62. Что нельзя делать с дизайном
+Не использовать:
+	•	Bootstrap admin template aesthetic;
+	•	разноцветные dashboard-карточки;
+	•	яркий cyberpunk;
+	•	постоянные gradients;
+	•	AI-brain иллюстрации;
+	•	огромные shadows;
+	•	чрезмерный glassmorphism;
+	•	бессмысленные charts;
+	•	pie charts ради заполнения экрана.
+Интерфейс должен ощущаться как настоящий системный продукт.
+
+63. Sidebar
+Sidebar:
+Δ DELTA
+Overview
+Assistant
+Devices
+Workspaces
+Tasks
+Services
+Activity
+Virtual IoT
+Settings.
+Внизу:
+Core Status
+Connected Devices count.
+
+64. Overview Page
+Показывать:
+	•	System Status;
+	•	Devices Online;
+	•	Registered Devices;
+	•	Connected Services;
+	•	Workspaces;
+	•	Open Tasks;
+	•	Recent Activity.
+Не делать классический BI dashboard.
+Пример:
+DELTA
+System Online
+2 / 3 Devices Online
+Services
+Delta Tasks ● Online
+Recent Activity
+...
+
+65. Devices Page
+Devices — визуально важная часть интерфейса.
+Карточка:
+MacBook Air
+● ONLINE
+macOS · arm64
+Last seen now
+Capabilities
+Apps
+Paths
+Browser
+System Info.
+Карточки лаконичные и кликабельные.
+
+66. Device Details UI
+Технический экран:
+hostname
+OS
+architecture
+username
+agent version
+capabilities
+last heartbeat
+connection status
+recent commands
+command results.
+Кнопки:
+Get System Info
+Open Example URL.
+
+67. Workspaces Page
+Показывать:
+Workspace cards.
+Например:
+Dark Weather
+Master Thesis
+University.
+В карточке:
+bound devices
+apps count
+URLs count
+tasks count.
+
+68. Workspace Details
+Показывать:
+description
+device bindings
+local paths
+apps
+URLs
+tasks.
+Кнопка:
+Launch Workspace.
+Выбор target device.
+
+69. Tasks Page
+Task Manager UI должен использовать Delta Tasks API.
+Показывать:
+title
+workspace
+status
+priority
+due date.
+Фильтры:
+workspace
+status
+priority.
+
+70. Services Page
+Очень важный раздел.
+Показывать:
+Delta Tasks
+● ONLINE
+v0.1.0
+6 tools.
+Later:
+Delta Weather
+Delta Calendar
+Delta Notes
+etc.
+Service Details:
+	•	health;
+	•	version;
+	•	base URL;
+	•	available tools;
+	•	last health check;
+	•	recent calls.
+
+71. Assistant Page
+Assistant — визуально центральная часть Delta.
+Нужен clean dark chat UI.
+Внизу:
+text input
+	•	 
+microphone button
+	•	 
+send.
+Показывать:
+user message
+assistant response.
+После voice request показывать transcript.
+
+72. Voice Visual States
+Предусмотреть:
+Idle
+Listening
+Transcribing
+Thinking
+Executing Tool
+Speaking
+Error.
+Пример:
+Listening…
+Transcribing…
+Calling Delta Tasks…
+Done.
+Не показывать chain-of-thought.
+
+73. Microphone UI
+Кнопка микрофона должна быть заметной, но не огромной.
+Можно использовать:
+minimal waveform animation.
+Во время Listening:
+показать явный visual state.
+
+74. Assistant Debug Mode
+В developer/debug mode можно раскрывать:
+Tool
+Arguments
+Target Service
+Result
+Duration.
+По умолчанию эти детали скрыты.
+
+75. Activity Page
+Timeline / event list.
+Пример:
+20:14
+Voice request
+"Добавь задачу протестировать API"
+20:14
+tasks.create
+Delta Tasks
+SUCCESS
+20:15
+MacBook
+Workspace Dark Weather launched.
+
+76. Virtual IoT Page
+Показывать:
+Temperature
+Brightness
+Motion
+Desk Light.
+Позволить вручную менять desk light.
+Использовать этот экран как эмулятор будущего IoT.
+
+77. Typography
+Современный sans-serif / system font stack.
+Типографика:
+	•	строгая;
+	•	чистая;
+	•	техническая;
+	•	читаемая.
+Иерархию делать через:
+	•	size;
+	•	weight;
+	•	spacing.
+Не через десятки цветов.
+
+78. Motion
+Animations:
+короткие
+спокойные
+функциональные.
+Допустимы:
+hover
+page transitions
+status animation
+waveform
+loading state.
+Не делать cinematic UI.
+
+79. Reusable UI Components
+Создать reusable primitives:
+Button
+IconButton
+Card
+Panel
+Badge
+StatusIndicator
+Sidebar
+Modal
+Input
+Textarea
+Select
+Table
+EmptyState
+LoadingState
+ErrorState.
+Domain components:
+DeviceCard
+ServiceCard
+WorkspaceCard
+TaskItem
+ActivityItem
+VoiceRecorder
+AssistantMessage
+ToolExecutionDetails.
+
+80. Responsive
+Главный сценарий:
+desktop / laptop.
+Обязательно нормально работать на:
+1366x768
+1920x1080
+типичных MacBook resolutions.
+На мобильную версию не тратить много времени.
+Sidebar должен уметь collapse.
+
+81. Frontend Architecture
+Не размазывать API calls по React components.
+Создать:
+API client layer.
+Использовать typed contracts.
+Создать понятную state architecture.
+Не вводить чрезмерно сложный global state manager без необходимости.
+
+82. API Versioning
+Использовать:
+/api/v1/...
+для REST.
+
+83. Core API
+Минимально:
+GET /health
+GET /api/v1/devices
+GET /api/v1/devices/{id}
+POST /api/v1/devices/{id}/commands
+GET /api/v1/workspaces
+POST /api/v1/workspaces
+GET /api/v1/workspaces/{id}
+PATCH /api/v1/workspaces/{id}
+DELETE /api/v1/workspaces/{id}
+GET /api/v1/workspaces/{id}/bindings
+POST /api/v1/workspaces/{id}/bindings
+POST /api/v1/workspaces/{id}/launch
+GET /api/v1/services
+GET /api/v1/services/{service_id}
+GET /api/v1/activity
+GET /api/v1/iot/state
+POST /api/v1/iot/light
+POST /api/v1/assistant/message
+POST /api/v1/assistant/voice.
+
+84. WebSocket Endpoints
+Создать отдельный WebSocket для Agents.
+Дополнительно можно использовать WebSocket/SSE для realtime Dashboard updates.
+Не переусложнять.
+
+85. Cross-platform Requirements
+Delta Agent должен работать на:
+Windows
+macOS
+Linux.
+Общие команды должны иметь одинаковое logical API.
+Пример:
+open_app("vscode")
+а реализация зависит от платформы.
+
+86. Authentication MVP
+Сложную authentication не делать.
+Допустим development token.
+Но:
+не хардкодить token.
+Хранить через env/config.
+Architecture должна предусматривать future:
+	•	user auth;
+	•	device pairing;
+	•	device trust;
+	•	tool permissions.
+
+87. Security Boundaries
+Запрещено:
+	•	arbitrary shell;
+	•	arbitrary PowerShell;
+	•	arbitrary Bash;
+	•	remote Python eval;
+	•	file deletion;
+	•	process killing через свободный command;
+	•	downloading and executing binaries;
+	•	credential extraction;
+	•	password collection.
+Все actions explicit и allowlisted.
+
+88. Shared Contracts
+Вынести общие contracts.
+Например:
+ToolCall
+ToolResult
+CommandMessage
+CommandResult
+ServiceManifest.
+Избегать duplicate schemas между сервисами.
+
+89. Tests — Delta Core
+Добавить tests минимум для:
+	•	health;
+	•	device registration;
+	•	heartbeat;
+	•	offline detection;
+	•	command dispatch;
+	•	workspace CRUD;
+	•	workspace binding;
+	•	workspace launch;
+	•	Tool Registry;
+	•	Service Registry;
+	•	Virtual IoT;
+	•	MockLLM;
+	•	Assistant tool selection;
+	•	Task Service integration mock.
+
+90. Tests — Delta Tasks
+Добавить:
+	•	health;
+	•	task create;
+	•	task list;
+	•	filters;
+	•	task update;
+	•	task complete;
+	•	task delete.
+
+91. Tests — Delta Agent
+Минимум:
+	•	platform detection;
+	•	capability registration;
+	•	command allowlist;
+	•	open_url mock;
+	•	invalid command rejection.
+OS-specific tests можно mock.
+
+92. Voice Tests
+Не требовать реального микрофона в CI.
+Использовать:
+MockSTTProvider
+MockTTSProvider.
+Проверить:
+audio request
+↓
+transcript
+↓
+Assistant
+↓
+tool call
+↓
+response
+↓
+TTS request.
+
+93. Seed Data
+Создать demo seed.
+Workspaces:
+Master Thesis
+Dark Weather.
+Tasks:
+Prepare API tests
+Finish architecture
+Add device agent.
+Virtual IoT:
+temperature = 23.0
+brightness = 30
+motion = true
+desk_light = false.
+
+94. Demo Scenario 1 — Device Connection
+Запустить Delta Agent.
+Dashboard:
+MacBook Air
+● ONLINE.
+Agent heartbeat обновляется.
+После остановки Agent:
+Device становится OFFLINE.
+
+95. Demo Scenario 2 — Voice Devices
+Пользователь нажимает microphone.
+Говорит:
+«Какие устройства подключены?»
+STT:
+↓
+text.
+LLM:
+↓
+devices.list.
+Delta:
+↓
+Assistant response.
+TTS:
+↓
+«Сейчас подключён MacBook Air.»
+
+96. Demo Scenario 3 — Task Manager
+Пользователь говорит:
+«Добавь задачу подготовить презентацию по дипломной работе.»
+LLM:
+tasks.create.
+Delta Core:
+↓
+Delta Tasks.
+Task:
+created.
+Dashboard:
+обновляется.
+TTS:
+«Задача добавлена.»
+
+97. Demo Scenario 4 — Task List
+Пользователь:
+«Покажи задачи по дипломной работе.»
+LLM:
+tasks.list.
+Delta Tasks:
+↓
+Tasks.
+Assistant:
+кратко перечисляет.
+TTS:
+озвучивает.
+
+98. Demo Scenario 5 — Workspace
+Пользователь:
+«Открой Dark Weather на этом компьютере.»
+LLM:
+workspaces.launch.
+Core:
+↓
+Agent.
+Agent:
+opens VS Code
+opens project path
+opens configured URLs.
+Activity:
+WORKSPACE_LAUNCHED.
+TTS:
+«Dark Weather открыт.»
+
+99. Demo Scenario 6 — Virtual IoT
+User:
+«Включи рабочий свет.»
+LLM:
+iot.set_light.
+VirtualIoTAdapter:
+desk_light = true.
+Dashboard:
+updates.
+TTS:
+«Рабочий свет включён.»
+
+100. Demo Scenario 7 — Services
+Dashboard → Services:
+Delta Tasks
+ONLINE
+v0.1
+6 tools.
+Assistant использует Task Service через Service Registry, а не через hardcoded DB access.
+
+101. Definition of Done
+MVP считается готовым только если:
+	•	Docker Compose запускается;
+	•	PostgreSQL работает;
+	•	Delta Core health OK;
+	•	Delta Tasks health OK;
+	•	Control Center открывается;
+	•	Agent запускается на поддерживаемой desktop OS;
+	•	Agent появляется ONLINE;
+	•	heartbeat работает;
+	•	OFFLINE detection работает;
+	•	device details работают;
+	•	Agent выполняет allowlisted command;
+	•	Workspace создаётся;
+	•	binding создаётся;
+	•	Workspace запускается;
+	•	Task Service работает отдельно;
+	•	Service Registry видит Delta Tasks;
+	•	Assistant использует tools;
+	•	Mock LLM работает;
+	•	OpenRouter подключается через env;
+	•	Voice input работает;
+	•	STT распознаёт voice;
+	•	TTS озвучивает ответ;
+	•	text mode остаётся доступен;
+	•	Virtual IoT работает;
+	•	Activity Log работает;
+	•	Dashboard обновляет статусы;
+	•	основные tests проходят;
+	•	README позволяет развернуть систему с нуля.
+
+102. Documentation
+Создать:
+README.md
+docs/ARCHITECTURE.md
+docs/MVP_SCOPE.md
+docs/SERVICE_INTEGRATION.md
+docs/VOICE_PIPELINE.md
+docs/DEVICE_PROTOCOL.md
+docs/SECURITY.md
+docs/FUTURE_ROADMAP.md.
+
+103. ARCHITECTURE.md
+Описать:
+	•	Delta Core;
+	•	Delta Agent;
+	•	Delta Tasks;
+	•	Delta Control Center;
+	•	Service Registry;
+	•	Tool Registry;
+	•	Voice Pipeline;
+	•	Device Registry;
+	•	Workspaces;
+	•	Virtual IoT;
+	•	future Raspberry Pi;
+	•	future Dark Weather.
+Добавить Mermaid diagrams.
+
+104. SERVICE_INTEGRATION.md
+Очень подробно описать:
+	•	как создать новый сервис;
+	•	manifest;
+	•	health check;
+	•	tool schema;
+	•	Tool Registry;
+	•	Service Registry;
+	•	HTTP adapter;
+	•	Assistant integration.
+Добавить hypothetical example:
+Delta Weather.
+Но код Weather Service не писать.
+
+105. VOICE_PIPELINE.md
+Описать:
+Browser microphone
+↓
+audio format
+↓
+Core
+↓
+STT
+↓
+Assistant
+↓
+LLM
+↓
+Tool
+↓
+Result
+↓
+TTS
+↓
+Browser.
+Также описать fallback states.
+
+106. DEVICE_PROTOCOL.md
+Описать WebSocket protocol:
+register
+heartbeat
+command
+command_result.
+Привести JSON examples.
+
+107. FUTURE_ROADMAP.md
+Записать следующие этапы:
+v0.2
+	•	Dark Weather;
+	•	Calendar;
+	•	Notes;
+	•	better Context Engine.
+v0.3
+	•	Raspberry Pi;
+	•	Mosquitto;
+	•	MQTT;
+	•	real IoT sensors.
+v0.4
+	•	Automation Engine;
+	•	voice-created automation rules;
+	•	cross-device session handoff.
+v0.5
+	•	File Intelligence;
+	•	local document indexing;
+	•	project memory.
+
+108. AGENTS.md
+Создать AGENTS.md.
+Зафиксировать:
+Project:
+Delta Digital Ecosystem.
+Rules:
+	•	Python backend;
+	•	React frontend;
+	•	Task Manager separate microservice;
+	•	modular Delta Core;
+	•	Service Registry mandatory;
+	•	Tool Registry mandatory;
+	•	LLM only through tools;
+	•	no arbitrary shell;
+	•	Agent cross-platform;
+	•	platform adapters only;
+	•	voice mandatory;
+	•	dark Delta design mandatory;
+	•	tests mandatory;
+	•	Weather deferred;
+	•	IoT virtual in MVP;
+	•	future services must be pluggable;
+	•	do not add large infrastructure without justification.
+
+109. Code Quality
+Использовать:
+	•	type hints;
+	•	Pydantic schemas;
+	•	clear interfaces;
+	•	async where useful;
+	•	dependency injection;
+	•	reasonable separation;
+	•	small modules;
+	•	readable naming;
+	•	configuration through env.
+Не создавать god objects.
+Не создавать файлы по несколько тысяч строк.
+
+110. Не переусложнять
+Не добавлять без необходимости:
+	•	Kubernetes;
+	•	Kafka;
+	•	RabbitMQ;
+	•	Celery;
+	•	Redis Streams;
+	•	GraphQL;
+	•	gRPC;
+	•	CQRS;
+	•	event sourcing;
+	•	service mesh;
+	•	сложный DDD.
+MVP должен оставаться понятным одному разработчику.
+
+111. Implementation Order
+Работать строго по фазам.
+PHASE 1 — Foundation
+	•	repository structure;
+	•	Docker Compose;
+	•	PostgreSQL;
+	•	Delta Core skeleton;
+	•	Delta Tasks skeleton;
+	•	Control Center skeleton;
+	•	health endpoints;
+	•	config;
+	•	logging.
+PHASE 2 — Devices
+	•	Device Registry;
+	•	Agent WebSocket;
+	•	Delta Agent;
+	•	heartbeat;
+	•	online/offline;
+	•	Devices UI;
+	•	Device Details.
+PHASE 3 — Delta Tasks
+	•	Task DB;
+	•	CRUD;
+	•	tests;
+	•	Tasks UI;
+	•	Task Service manifest;
+	•	Service Registry integration.
+PHASE 4 — Workspaces
+	•	Workspace model;
+	•	bindings;
+	•	workspace UI;
+	•	launch logic;
+	•	Agent open_app/open_path/open_url.
+PHASE 5 — LLM and Tools
+	•	LLMProvider;
+	•	MockLLM;
+	•	OpenRouter;
+	•	Tool Registry;
+	•	tool calling;
+	•	Assistant text UI.
+PHASE 6 — Voice Input
+	•	microphone UI;
+	•	browser recording;
+	•	STTProvider;
+	•	Whisper;
+	•	/assistant/voice;
+	•	transcript UI.
+PHASE 7 — Voice Output
+	•	Piper;
+	•	TTSProvider;
+	•	audio playback;
+	•	Assistant voice state UI.
+PHASE 8 — Virtual IoT
+	•	abstraction;
+	•	state;
+	•	tools;
+	•	dashboard.
+PHASE 9 — Activity and Services
+	•	Activity Log;
+	•	Services UI;
+	•	health status;
+	•	realtime updates;
+	•	Assistant debug info.
+PHASE 10 — Polish
+	•	tests;
+	•	docs;
+	•	error handling;
+	•	dark Delta design polish;
+	•	demo seed;
+	•	demo scenarios.
+
+112. После каждой фазы
+Обязательно:
+	1	запустить build;
+	2	запустить tests;
+	3	проверить backend;
+	4	проверить frontend;
+	5	исправить regressions;
+	6	обновить docs при изменении architecture;
+	7	только затем переходить дальше.
+Не оставлять критический TODO вместо работающей реализации.
+
+113. Приоритет функциональности
+При конфликте сроков приоритет:
+	1	Device connectivity.
+	2	Task Microservice.
+	3	Tool / Service architecture.
+	4	Workspace launch.
+	5	Text Assistant.
+	6	Voice input.
+	7	Voice output.
+	8	Dashboard.
+	9	Virtual IoT.
+	10	Visual polish.
+НО:
+Voice Input, Voice Output, Device Dashboard, Task Microservice, Service Registry, PC Agent и Workspace Launch нельзя полностью удалить из MVP.
+
+114. Главный End-to-End Acceptance Scenario
+После чистого запуска проекта:
+	1	docker compose up запускает инфраструктуру.
+	2	Delta Control Center открывается.
+	3	Пользователь запускает Delta Agent на ноутбуке.
+	4	Ноутбук появляется ONLINE.
+	5	Пользователь открывает Assistant.
+	6	Нажимает microphone.
+	7	Говорит:
+«Добавь задачу протестировать API по дипломной работе.»
+	8	Browser отправляет audio.
+	9	STT получает transcript.
+	10	Assistant передаёт запрос LLM.
+	11	LLM выбирает:
+tasks.create.
+	12	Tool Router определяет:
+Delta Tasks.
+	13	Delta Core вызывает Delta Tasks API.
+	14	Task сохраняется.
+	15	Tool result возвращается Assistant.
+	16	Assistant создаёт текстовый ответ.
+	17	TTS создаёт голосовой ответ.
+	18	Browser воспроизводит его.
+	19	Task появляется в Tasks UI.
+	20	Activity Log показывает весь workflow.
+
+115. Второй Acceptance Scenario
+Пользователь голосом:
+«Открой Dark Weather на этом компьютере.»
+Assistant:
+↓
+workspaces.launch.
+Core:
+↓
+current Device.
+Agent:
+↓
+open_app("vscode")
+open_path(project path)
+open configured URLs.
+Assistant:
+↓
+TTS response.
+
+116. Третий Acceptance Scenario
+User:
+«Включи рабочий свет.»
+Assistant:
+↓
+iot.set_light.
+Virtual IoT:
+↓
+desk_light = true.
+UI:
+↓
+status updated.
+TTS:
+↓
+«Рабочий свет включён.»
+
+117. Архитектурный Acceptance Test
+Представь, что завтра нужно добавить:
+Delta Weather.
+Для этого должно быть достаточно:
+	1	создать новый сервис;
+	2	дать ему REST API;
+	3	описать manifest;
+	4	зарегистрировать tools;
+	5	добавить service config.
+После этого Assistant должен иметь возможность использовать:
+weather.current
+weather.forecast.
+Если для этого приходится серьёзно переписывать Delta Core, архитектура неправильная.
+
+118. Финальная цель MVP
+Delta v0.1 должна доказать:
+один пользователь может управлять своими компьютерами и независимыми сервисами через единый голосовой и текстовый AI-интерфейс, а архитектура позволяет постепенно подключать новые цифровые и физические сервисы без переписывания ядра.
+Delta должна восприниматься не как voice bot, а как основа персональной цифровой экосистемы.
+
+119. Перед началом разработки
+Сначала:
+	1	изучи текущий repository;
+	2	если repository пустой — создай структуру;
+	3	создай docs/ARCHITECTURE.md;
+	4	создай docs/MVP_SCOPE.md;
+	5	создай AGENTS.md;
+	6	составь implementation checklist;
+	7	только затем начинай реализацию.
+При выборе между сложным и простым решением выбирай минимально сложное решение, которое сохраняет:
+	•	cross-platform;
+	•	service extensibility;
+	•	Tool Calling;
+	•	Voice;
+	•	Security;
+	•	будущий Raspberry Pi;
+	•	будущий MQTT;
+	•	будущий Dark Weather;
+	•	будущие сервисы;
+	•	единый Delta UX.
+Не сокращай MVP за счёт удаления ключевых частей проекта.

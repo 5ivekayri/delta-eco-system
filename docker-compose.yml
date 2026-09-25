@@ -1,0 +1,66 @@
+name: delta
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: docker/postgres.Dockerfile
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      CORE_DB_PASSWORD: ${CORE_DB_PASSWORD:?Set CORE_DB_PASSWORD in .env}
+      TASKS_DB_PASSWORD: ${TASKS_DB_PASSWORD:?Set TASKS_DB_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  delta-core:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: [sh, -c, 'alembic -c apps/delta-core/alembic.ini upgrade head && exec uvicorn delta_core.main:create_app --factory --host 0.0.0.0 --port 8000']
+    environment:
+      DATABASE_URL: postgresql+psycopg://delta_core:${CORE_DB_PASSWORD}@postgres/delta_core
+      DELTA_TOKEN: ${DELTA_TOKEN:?Set DELTA_TOKEN in .env}
+      TASKS_URL: http://delta-tasks:8000
+      SERVICE_CONFIGS: ${SERVICE_CONFIGS:-null}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      STT_PROVIDER: ${STT_PROVIDER:-whisper}
+      TTS_PROVIDER: ${TTS_PROVIDER:-piper}
+    ports: ['127.0.0.1:8000:8000']
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  delta-tasks:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: [sh, -c, 'alembic -c apps/delta-tasks/alembic.ini upgrade head && exec uvicorn delta_tasks.main:create_app --factory --host 0.0.0.0 --port 8000']
+    environment:
+      DATABASE_URL: postgresql+psycopg://delta_tasks:${TASKS_DB_PASSWORD}@postgres/delta_tasks
+      DELTA_TOKEN: ${DELTA_TOKEN:?Set DELTA_TOKEN in .env}
+      SERVICE_NAME: delta-tasks
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  delta-control-center:
+    build:
+      context: apps/delta-control-center
+    ports: ['127.0.0.1:8080:80']
+    depends_on:
+      delta-core: {condition: service_healthy}
+      delta-tasks: {condition: service_healthy}
+volumes:
+  postgres-data:

@@ -1,0 +1,7 @@
+.venv
+**/node_modules
+**/dist
+.git
+.env
+prompt.rtf
+.runtime

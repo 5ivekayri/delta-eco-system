@@ -1,0 +1,1 @@
+"""Delta Core modular monolith."""

@@ -1,0 +1,32 @@
+import {readFileSync} from 'node:fs';
+import {test,expect} from '@playwright/test';
+
+test('creates, edits, filters, completes and deletes a task through the independent service', async({page})=>{
+  const token=readFileSync(new URL('../../../.env',import.meta.url),'utf8').match(/^DELTA_TOKEN=(.+)$/m)![1];
+  await page.goto('/');
+  await page.evaluate(token=>sessionStorage.setItem('delta-token',token),token);
+  await page.reload();
+  await page.getByRole('button',{name:'Tasks',exact:true}).click();
+  await page.getByRole('button',{name:'Новая задача'}).click();
+  const title=`Browser verification ${Date.now()}`;
+  await page.getByLabel('Название',{exact:true}).fill(title);
+  await page.getByLabel('Приоритет задачи',{exact:true}).selectOption('high');
+  await page.getByRole('button',{name:'Сохранить задачу'}).click();
+  const row=page.locator('.task-row').filter({hasText:title});
+  await expect(row).toBeVisible();
+  await row.getByTitle('Редактировать',{exact:true}).click();
+  await page.getByLabel('Описание',{exact:true}).fill('Edited through browser');
+  await page.getByRole('button',{name:'Сохранить задачу'}).click();
+  await expect(row).toContainText('Edited through browser');
+  await page.getByLabel('Приоритет',{exact:true}).selectOption('low');
+  await expect(row).not.toBeVisible();
+  await page.getByLabel('Приоритет',{exact:true}).selectOption('high');
+  await row.getByTitle('Завершить',{exact:true}).click();
+  await expect(row.locator('select')).toHaveValue('done');
+  page.on('dialog',dialog=>dialog.accept());
+  await row.getByTitle('Удалить',{exact:true}).click();
+  await expect(row).not.toBeVisible();
+  await page.getByRole('button',{name:'Services',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Delta Tasks',exact:true})).toBeVisible();
+  await expect(page.getByText('v0.1.0 · 6 tools',{exact:true})).toBeVisible();
+});

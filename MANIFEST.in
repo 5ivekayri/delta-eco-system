@@ -1,0 +1,4 @@
+recursive-include apps/delta-core/migrations *.py *.mako
+recursive-include apps/delta-tasks/migrations *.py *.mako
+include apps/delta-core/alembic.ini
+include apps/delta-tasks/alembic.ini
