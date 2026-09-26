@@ -45,7 +45,9 @@ class ToolRegistry:
         start=time.monotonic();service_id=None
         try:
             local=self.local.get(call.name)
-            if local and local.enabled:
+            if local:
+                if not local.enabled:
+                    raise DeltaError('TOOL_NOT_FOUND', 'Tool is not currently available', 404)
                 service_id=local.service_id
                 arguments=local.schema.model_validate(call.arguments)
                 data=await local.handler(arguments)
@@ -71,6 +73,8 @@ class ToolRegistry:
                 if not response.is_success:
                     try: error=response.json()
                     except ValueError: error={}
+                    if not isinstance(error, dict):
+                        error = {}
                     raise DeltaError(error.get('error_code','SERVICE_ERROR'),error.get('message',f'Service returned HTTP {response.status_code}'),response.status_code)
                 data=response.json()
             success=not isinstance(data,dict) or data.get('success',True)

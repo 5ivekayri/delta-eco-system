@@ -1,6 +1,6 @@
 from uuid import UUID
 from fastapi import APIRouter,Request
-from pydantic import Field
+from pydantic import Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from delta_contracts.devices import StrictModel
@@ -13,6 +13,14 @@ router=APIRouter(prefix='/api/v1/assistant')
 class MessageInput(StrictModel):
     message:str=Field(min_length=1,max_length=10000)
     device_id:UUID|None=None
+
+    @field_validator('message')
+    @classmethod
+    def nonblank_message(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError('Message must not be blank')
+        return value
 
 
 @router.post('/message')

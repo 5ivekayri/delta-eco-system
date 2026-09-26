@@ -1,6 +1,6 @@
 # Security boundaries
 
-This document records the intended MVP boundary. HTTP authentication, network/database separation and Agent allowlist enforcement are implemented. Tool/LLM enforcement follows in phase 5.
+This document records the intended MVP boundary. HTTP authentication, network/database separation and Agent allowlist enforcement are implemented. Tool/LLM validation and enabled-tool enforcement are implemented.
 
 ## Development authentication
 
@@ -12,9 +12,9 @@ Compose publishes Core and UI only on loopback. PostgreSQL and Tasks are interna
 
 Only `system_info`, `open_url`, `open_path`, `open_app` are valid actions. Validate payloads, allow only HTTP(S) URLs, restrict paths to explicitly configured directories and resolve app identifiers locally. Never use a shell interpreter, evaluate source code or accept arbitrary executable paths. Reject unknown actions and malformed messages. Correlate results to a pending command on the authenticated originating connection. Do not replay a timed-out desktop action automatically.
 
-## LLM policy to implement
+## Implemented LLM policy
 
-LLM selects registered, enabled tools. Server validation and permission metadata are authoritative. Service manifests/configuration are trusted operator input, never assistant-generated executable instructions. No direct LLM database/filesystem access. Tool output is data, not instructions. Error reporting must preserve partial failures and never claim successful execution when an adapter failed.
+LLM selects registered, enabled tools. The registry validates local arguments with Pydantic and external arguments against manifest JSON Schema. Permission metadata describes capabilities; per-user permission enforcement remains future work. Service manifests/configuration are trusted operator input, never assistant-generated executable instructions. No direct LLM database/filesystem access. Tool output is data, not instructions. Error reporting must preserve partial failures and never claim successful execution when an adapter failed.
 
 ## Logs and voice
 

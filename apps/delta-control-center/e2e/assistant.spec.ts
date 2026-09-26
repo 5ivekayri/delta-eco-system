@@ -9,6 +9,15 @@ test('Mock Assistant creates a real task through the registry',async({page,reque
   await page.getByLabel('Сообщение Assistant').fill('Добавь задачу '+title);
   await page.getByRole('button',{name:'Отправить',exact:true}).click();
   await expect(page.locator('.assistant-message').last()).toContainText('Задача добавлена: '+title);
+  await page.reload();
+  await page.getByRole('button',{name:'Assistant',exact:true}).click();
+  await expect(page.locator('.assistant-message').last()).toContainText('Задача добавлена: '+title);
+  await expect(page.getByText('Tool execution details',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Settings',exact:true}).click();
+  await page.getByLabel('Developer mode').check();
+  await page.getByRole('button',{name:'Assistant',exact:true}).click();
+  await page.getByText('Tool execution details',{exact:true}).last().click();
+  await expect(page.locator('.assistant-message').last().locator('pre')).toContainText('tasks.create');
   await page.getByRole('button',{name:'Tasks',exact:true}).click();
   const row=page.locator('.task-row').filter({hasText:title});await expect(row).toBeVisible();
   page.on('dialog',d=>d.accept());await row.getByTitle('Удалить',{exact:true}).click();await expect(row).not.toBeVisible();

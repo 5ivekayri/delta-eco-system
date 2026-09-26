@@ -6,7 +6,7 @@
 - [x] Phase 2: devices, WebSocket, Agent/platforms, heartbeat/offline, device UI/details.
 - [x] Phase 3: Tasks CRUD/filtering/tests/UI, manifest and Service Registry.
 - [x] Phase 4: workspace CRUD, bindings, launch and UI.
-- [ ] Phase 5: Tool Registry, Mock/OpenRouter providers, assistant/history/UI.
+- [x] Phase 5: Tool Registry, Mock/OpenRouter providers, assistant/history/UI.
 - [ ] Phase 6: browser recording, Whisper/mock STT, voice endpoint/transcript.
 - [ ] Phase 7: Piper/mock TTS, playback and fallback states.
 - [ ] Phase 8: IoT adapter, persistent virtual state, tools and UI.
@@ -59,3 +59,22 @@ Each phase must pass build/tests/backend/frontend checks before the next phase. 
 - Python/frontend builds and frontend unit test pass. PostgreSQL migration and Compose health pass.
 - All 4 browser tests pass, including workspace create, device binding, offline launch disabled and deletion.
 - Workspace command sequencing tested with mocked desktop dispatch; real host system_info/connectivity was verified in phase 2. Full desktop workspace launch remains an acceptance check for phase 10.
+
+## Local web readiness — 2026-09-26
+
+- Started Docker Desktop and rebuilt/started the development Compose stack with the existing PostgreSQL volume. Core and Tasks reached healthy status; Control Center is available at http://localhost:8080.
+- Backend: `.venv/bin/python -m pytest -q` — 20 passed (one dependency deprecation warning). Frontend: `npm test` — 1 passed; `npm run build` passed.
+- Host Agent smoke: registration, system_info, heartbeat and disconnect/offline passed. The smoke Agent stops after verification.
+- Chrome at the Compose URL: all 5 Playwright scenarios passed — health/session settings, device details, task lifecycle, workspace CRUD/binding, and mock Assistant creating a real task through the registry.
+- Sign in through Settings using DELTA_TOKEN from the local `.env`; the token is kept in sessionStorage.
+- This is a usable development preview, not completed MVP acceptance: phase 5 remains open; voice, Activity and Virtual IoT are not ready.
+
+## Phase 5 verification — 2026-09-26
+
+- Verified local and external Tool Registry execution, schema validation, disabled-tool exclusion, unknown-tool rejection and independent HTTP service integration.
+- Hardened malformed/empty OpenRouter responses, whitespace-only messages, duplicate call IDs within a batch, ambiguous Mock device selection, and disabled local tools shadowed by external tools.
+- `pytest -q`: 27 passed (one dependency deprecation warning). Tests include provider/tool message round trip, authentication, failure after a successful action with persisted results, malformed provider responses and connection failures.
+- Frontend unit test passed; TypeScript/Vite production build passed. `python3 -m uv build` produced wheel and sdist. Initial direct build with `--no-isolation` failed because the runtime venv has no setuptools; the normal isolated uv build succeeded.
+- Docker Compose rebuilt and started the application. Initial browser run exposed stale nginx upstream IPs after backend recreation, resulting in cross-routed API requests and 404 responses. Fixed with shared upstream zones and dynamic Docker DNS resolution, per https://nginx.org/en/docs/http/ngx_http_upstream_module.html#server (nginx >= 1.27.3).
+- nginx configuration validation passed. Recreated Core/Tasks again without restarting the frontend; all 5 Chrome scenarios passed, including Assistant task creation, persisted history after reload and opt-in tool execution details.
+- OpenRouter is verified with a mocked HTTP transport only; no real model/API call was made. Voice, Virtual IoT and Activity UI remain later phases.

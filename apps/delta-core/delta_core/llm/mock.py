@@ -44,8 +44,10 @@ class MockLLMProvider(LLMProvider):
         elif 'открой' in lower or lower.startswith('open '):
             if not workspace:return LLMTurn(text='Укажите существующее рабочее пространство.')
             name='workspaces.launch';arguments={'workspace_id':workspace['id']}
-            device=next((d for d in context.get('devices',[]) if d['display_name'].casefold() in lower),None)
-            if device:arguments['device_id']=device['id']
+            devices=[d for d in context.get('devices',[]) if d['display_name'].casefold() in lower]
+            if len(devices)>1:
+                return LLMTurn(text='Найдено несколько подходящих устройств. Уточните имя целевого компьютера.')
+            if devices:arguments['device_id']=devices[0]['id']
             elif context.get('device_id'):arguments['device_id']=context['device_id']
         elif 'свет' in lower or 'light' in lower:
             name='iot.set_light';arguments={'enabled':not any(w in lower for w in ['выключ','off'])}

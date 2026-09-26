@@ -28,9 +28,11 @@ class OpenRouterLLMProvider(LLMProvider):
             response=await client.post('https://openrouter.ai/api/v1/chat/completions',headers={'Authorization':f'Bearer {self.api_key}'},json=payload)
             response.raise_for_status()
             message=response.json()['choices'][0]['message']
+            if not isinstance(message, dict) or not isinstance(message.get('content') or '', str):
+                raise ValueError('Invalid assistant message')
             calls=[ToolCall(id=c['id'],name=aliases[c['function']['name']],arguments=json.loads(c['function']['arguments'])) for c in message.get('tool_calls',[])]
             return LLMTurn(text=message.get('content') or '',calls=calls)
-        except (httpx.HTTPError,ValueError,KeyError,TypeError):
+        except (httpx.HTTPError,ValueError,KeyError,TypeError,IndexError,AttributeError):
             raise DeltaError('LLM_UNAVAILABLE','OpenRouter request failed or returned invalid tool calls',503)
         finally:
             if own:await client.aclose()

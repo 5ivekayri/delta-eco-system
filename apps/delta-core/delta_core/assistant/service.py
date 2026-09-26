@@ -37,7 +37,8 @@ class AssistantService:
                 break
             if not turn.calls:
                 text=turn.text;break
-            if len(calls)+len(turn.calls)>8 or any(call.id in seen for call in turn.calls):
+            turn_ids = [call.id for call in turn.calls]
+            if len(calls)+len(turn.calls)>8 or len(set(turn_ids)) != len(turn_ids) or any(call_id in seen for call_id in turn_ids):
                 text='Достигнут лимит вызовов инструментов. '+ '\n'.join(describe_result(r) for r in results)
                 break
             messages.append({'role':'assistant','content':turn.text or None,'tool_calls':[
