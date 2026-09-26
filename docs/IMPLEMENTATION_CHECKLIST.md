@@ -78,3 +78,12 @@ Each phase must pass build/tests/backend/frontend checks before the next phase. 
 - Docker Compose rebuilt and started the application. Initial browser run exposed stale nginx upstream IPs after backend recreation, resulting in cross-routed API requests and 404 responses. Fixed with shared upstream zones and dynamic Docker DNS resolution, per https://nginx.org/en/docs/http/ngx_http_upstream_module.html#server (nginx >= 1.27.3).
 - nginx configuration validation passed. Recreated Core/Tasks again without restarting the frontend; all 5 Chrome scenarios passed, including Assistant task creation, persisted history after reload and opt-in tool execution details.
 - OpenRouter is verified with a mocked HTTP transport only; no real model/API call was made. Voice, Virtual IoT and Activity UI remain later phases.
+
+## Assistant Markdown — 2026-09-26
+
+- Render saved and new Assistant responses with react-markdown and remark-gfm; style headings, emphasis, lists, tables, links, quotations and code for the dark UI. User messages remain plain text.
+- Raw HTML is skipped; default URL filtering retained. External links use noopener/noreferrer; images render as alt text. Library reference: https://github.com/remarkjs/react-markdown#security.
+- Frontend unit test and production build passed. Rebuilt/restarted only Control Center; OpenRouter/backend configuration preserved.
+- Two Chrome scenarios passed against port 8080: foundation and Markdown rendering, including history/new messages, literal code, HTML/unsafe-link checks and mobile overflow. LLM responses were stubbed for this UI test; no OpenRouter request was needed.
+
+- Follow-up: inspected the latest real OpenRouter response in Chrome at localhost:8080: 4 rendered headings, 14 strong elements, no visible heading markers. Added Cache-Control: no-cache to static responses so browsers revalidate after deployments. Existing open tabs still need a reload to execute the new bundle.
