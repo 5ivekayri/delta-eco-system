@@ -1,0 +1,23 @@
+# Isolated empty-volume check. Compose >= 2.24.4; reuse locally built images.
+services:
+  postgres:
+    image: delta-postgres:latest
+  delta-core:
+    image: delta-delta-core:latest
+    ports: !override ['127.0.0.1:18000:8000']
+    environment:
+      LLM_PROVIDER: mock
+      OPENROUTER_API_KEY: ''
+      OPENROUTER_MODEL: ''
+      DELTA_ROUTER_MODEL: ''
+      DELTA_ASSISTANT_MODEL: ''
+      SERVICE_CONFIGS: 'null'
+      STT_PROVIDER: whisper
+      TTS_PROVIDER: piper
+      WHISPER_MODEL: small
+      PIPER_MODEL: /models/piper/ru_RU-irina-medium.onnx
+  delta-tasks:
+    image: delta-delta-tasks:latest
+  delta-control-center:
+    image: delta-delta-control-center:latest
+    ports: !override ['127.0.0.1:18080:80']

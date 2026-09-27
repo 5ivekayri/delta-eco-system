@@ -1,5 +1,7 @@
 from uuid import UUID
-from fastapi import APIRouter,Request
+from fastapi import APIRouter,Request,BackgroundTasks
+from fastapi.responses import JSONResponse
+from delta_contracts.errors import DeltaError
 from pydantic import Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,8 +26,11 @@ class MessageInput(StrictModel):
 
 
 @router.post('/message')
-async def message(body:MessageInput,request:Request):
-    return await request.app.state.assistant.message(body.message,str(body.device_id) if body.device_id else None)
+async def message(body:MessageInput,request:Request,background_tasks:BackgroundTasks):
+    try:
+        return await request.app.state.assistant.message(body.message,str(body.device_id) if body.device_id else None, background=background_tasks)
+    except DeltaError as error:
+        return JSONResponse({'success':False,'error_code':error.code,'message':error.message},status_code=error.status,background=background_tasks)
 
 
 @router.get('/history')

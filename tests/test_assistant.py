@@ -166,7 +166,7 @@ async def test_assistant_preserves_results_when_model_fails_after_action(tmp_pat
     app = create_app(Settings(delta_token='test-token-only-123456', database_url=f'sqlite:///{tmp_path}/core.db', service_configs=[]))
     Base.metadata.create_all(app.state.engine)
     try:
-        result = await AssistantService(app.state.engine, app.state.tools, Provider()).message('покажи устройства')
+        result = await AssistantService(app.state.engine, app.state.tools, Provider()).message('покажи устройства и объясни их состояние')
         assert result['tool_results'][0]['success']
         assert 'фактические результаты' in result['assistant_text']
         from sqlalchemy.orm import Session

@@ -1,3 +1,6 @@
+export class ApiError extends Error {
+  constructor(message: string, public transcript?: string, public timings?: VoiceTimings) {super(message);}
+}
 export interface Health { status: string; service: string; version: string }
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
@@ -7,7 +10,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {...init, headers});
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.message || body.error_code || `HTTP ${response.status}`);
+    throw new ApiError(body.message || body.error_code || `HTTP ${response.status}`, body.transcript, body.timings);
   }
   return response.json();
 }
@@ -42,7 +45,58 @@ export const deleteWorkspace=(id:string)=>request<{success:boolean}>('/core/api/
 export const saveBinding=(id:string,body:{device_id:string;local_path:string;apps:string[];urls:string[]})=>request<Binding>(`/core/api/v1/workspaces/${id}/bindings`,{method:'POST',body:JSON.stringify(body)});
 export const launchWorkspace=(id:string,device_id:string)=>request<CommandResult&{results:CommandResult[]}>(`/core/api/v1/workspaces/${id}/launch`,{method:'POST',body:JSON.stringify({device_id})});
 
-export interface AssistantResponse {id:string;assistant_text:string;tool_calls:{name:string;arguments:Record<string,unknown>}[];tool_results:{tool:string;success:boolean;message:string;data:unknown;duration_ms:number;service_id:string}[];transcript?:string;audio_available?:boolean;audio_base64?:string;tts_error?:string}
+export interface VoiceTimings {
+  route_source?:'local'|'llm'; local_router_ms?:number; confidence?:number;
+  upload_ms:number; stt_ms:number; router_ms:number; tool_ms:number;
+  response_generation_ms:number; tts_ms:number; server_total_ms:number;
+  total_ms?:number; client_upload_ms?:number; finalization_ms?:number;
+  execution_path:string; router_calls:number; response_generation_calls:number;
+  tts_status:string;
+}
+export interface AssistantResponse {route_source?:'local'|'llm'; local_router_ms?:number; confidence?:number; timings?:VoiceTimings; id:string;assistant_text:string;tool_calls:{name:string;arguments:Record<string,unknown>}[];tool_results:{tool:string;success:boolean;message:string;data:unknown;duration_ms:number;service_id:string}[];transcript?:string;audio_available?:boolean;audio_base64?:string;tts_error?:string;tts_message?:string;tts_provider?:string;audio_mime?:string}
 export interface Interaction extends AssistantResponse {user_message:string;created_at:string}
 export const getHistory=()=>request<Interaction[]>('/core/api/v1/assistant/history');
 export const sendMessage=(message:string,device_id?:string)=>request<AssistantResponse>('/core/api/v1/assistant/message',{method:'POST',body:JSON.stringify({message,device_id:device_id||null})});
+
+export interface VoiceConfig {provider: 'whisper'|'mock'; max_seconds: number; max_bytes: number}
+export const getVoiceConfig = () => request<VoiceConfig>('/core/api/v1/assistant/voice/config');
+export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, recordingEndedAt = performance.now()): Promise<AssistantResponse> => {
+  const form = new FormData();
+  form.append('audio', audio, 'recording');
+  if (deviceId) form.append('device_id', deviceId);
+  // fetch exposes no upload-complete event. XHR provides the browser upload
+  // interval separately from server processing and response download.
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const started = performance.now();
+    let uploadMs: number | undefined;
+    const abort = () => xhr.abort();
+    const cleanup = () => signal?.removeEventListener('abort', abort);
+    if (signal?.aborted) {reject(new DOMException('Aborted', 'AbortError')); return;}
+    xhr.open('POST', '/core/api/v1/assistant/voice');
+    const token = sessionStorage.getItem('delta-token');
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.timeout = 180000;
+    xhr.upload.onload = () => {uploadMs = performance.now() - started;};
+    xhr.onload = () => {
+      cleanup();
+      try {
+        const body = JSON.parse(xhr.responseText);
+        if (body.timings) body.timings = {...body.timings,
+          client_upload_ms: uploadMs, finalization_ms: started - recordingEndedAt,
+          total_ms: performance.now() - recordingEndedAt};
+        if (xhr.status >= 200 && xhr.status < 300) resolve(body);
+        else reject(new ApiError(body.message || body.error_code || `HTTP ${xhr.status}`, body.transcript, body.timings));
+      } catch {reject(new ApiError(`HTTP ${xhr.status}: некорректный ответ сервера`));}
+    };
+    xhr.onerror = () => {cleanup();reject(new ApiError('Сеть недоступна. Проверьте историю перед повторной отправкой.'));};
+    xhr.ontimeout = () => {cleanup();reject(new ApiError('Время ожидания истекло. Проверьте историю перед повторной отправкой.'));};
+    xhr.onabort = () => {cleanup();reject(new DOMException('Aborted', 'AbortError'));};
+    signal?.addEventListener('abort', abort, {once:true});
+    xhr.send(form);
+  });
+};
+
+export interface IoTState {source:string;desk_light:boolean;temperature:number;brightness:number;motion:boolean;updated_at:string}
+export const getIoTState=()=>request<IoTState>('/core/api/v1/iot/state');
+export const setIoTLight=(enabled:boolean)=>request<IoTState>('/core/api/v1/iot/light',{method:'POST',body:JSON.stringify({enabled})});

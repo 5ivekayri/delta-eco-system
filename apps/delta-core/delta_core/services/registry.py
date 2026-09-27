@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from sqlalchemy.exc import SQLAlchemyError
 from dataclasses import dataclass
 
 import httpx
@@ -25,7 +27,7 @@ class Service:
                 'version': manifest.version if manifest else None, 'base_url': self.base_url,
                 'health_url': manifest.health_url if manifest else '/health', 'enabled': self.enabled,
                 'status': self.status, 'last_health_check': self.last_health_check,
-                'available_tools': [t.model_dump() for t in manifest.tools if t.enabled] if manifest else []}
+                'available_tools': [t.model_dump() for t in manifest.tools if t.enabled] if manifest and self.enabled and self.status == 'online' else []}
 
 
 class ServiceRegistry:
@@ -67,17 +69,20 @@ class ServiceRegistry:
                     service.manifest = manifest
                 response = await self.client.get(service.base_url.rstrip('/') + service.manifest.health_url)
                 response.raise_for_status()
-                service.status = 'online' if response.json().get('status') == 'ok' else 'degraded'
+                service.status = 'online' if (response.json() if isinstance(response.json(), dict) else {}).get('status') == 'ok' else 'degraded'
                 if not service.manifest.enabled:
                     service.status = 'disabled'
             except (httpx.HTTPError, ValueError):
                 service.status = 'offline'
             service.last_health_check = utcnow().isoformat()
             if self.engine is not None and previous != service.status:
-                with Session(self.engine) as session:
-                    record_event(session, 'SERVICE_ONLINE' if service.status == 'online' else 'SERVICE_OFFLINE',
+                try:
+                    with Session(self.engine) as session:
+                        record_event(session, 'SERVICE_ONLINE' if service.status == 'online' else 'SERVICE_OFFLINE',
                                  f'{service.service_id}: {service.status}', service_id=service.service_id)
-                    session.commit()
+                        session.commit()
+                except SQLAlchemyError:
+                    logging.getLogger(__name__).warning("Service activity event could not be saved")
 
     async def monitor(self):
         while True:

@@ -6,6 +6,7 @@ from delta_core.devices.models import Device
 from delta_core.activity.models import ActivityEvent
 from delta_core.workspaces.models import Workspace,WorkspaceDeviceBinding
 from delta_core.assistant.models import Interaction
+from delta_core.iot.models import VirtualIoTState
 
 config = context.config
 settings = Settings()

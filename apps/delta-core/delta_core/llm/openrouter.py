@@ -6,12 +6,13 @@ from .base import LLMProvider,LLMTurn
 
 
 class OpenRouterLLMProvider(LLMProvider):
-    def __init__(self,api_key:str,model:str,client:httpx.AsyncClient|None=None):
+    def __init__(self,api_key:str,model:str,client:httpx.AsyncClient|None=None, *, router=False, max_tokens=1200):
         self.api_key=api_key;self.model=model;self.client=client
+        self.router=router;self.max_tokens=max_tokens
 
     async def respond(self,messages,tools,context):
         if not self.api_key or not self.model:
-            raise DeltaError('LLM_UNAVAILABLE','Configure OPENROUTER_API_KEY and OPENROUTER_MODEL',503)
+            raise DeltaError('LLM_UNAVAILABLE','Configure OPENROUTER_API_KEY and the router/assistant model',503)
         aliases={t['name'].replace('.','__'):t['name'] for t in tools}
         wire=[]
         for message in messages:
@@ -19,7 +20,9 @@ class OpenRouterLLMProvider(LLMProvider):
             if item.get('tool_calls'):
                 item['tool_calls']=[{**call,'function':{**call['function'],'name':call['function']['name'].replace('.','__')}} for call in item['tool_calls']]
             wire.append(item)
-        payload={'model':self.model,'messages':wire,'max_tokens':1200}
+        payload={'model':self.model,'messages':wire,'max_tokens':self.max_tokens}
+        if self.router:
+            payload.update(temperature=0, reasoning={'enabled':False}, provider={'sort':'latency'})
         if tools:
             payload['tools']=[{'type':'function','function':{'name':t['name'].replace('.','__'),'description':t['description'],'parameters':t['input_schema']}} for t in tools]
         own=self.client is None
@@ -31,6 +34,8 @@ class OpenRouterLLMProvider(LLMProvider):
             if not isinstance(message, dict) or not isinstance(message.get('content') or '', str):
                 raise ValueError('Invalid assistant message')
             calls=[ToolCall(id=c['id'],name=aliases[c['function']['name']],arguments=json.loads(c['function']['arguments'])) for c in message.get('tool_calls',[])]
+            if not calls and not (message.get('content') or '').strip():
+                raise ValueError('Empty model response')
             return LLMTurn(text=message.get('content') or '',calls=calls)
         except (httpx.HTTPError,ValueError,KeyError,TypeError,IndexError,AttributeError):
             raise DeltaError('LLM_UNAVAILABLE','OpenRouter request failed or returned invalid tool calls',503)

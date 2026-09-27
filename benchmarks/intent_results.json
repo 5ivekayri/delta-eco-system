@@ -1,0 +1,375 @@
+{
+  "commands": 40,
+  "repeats": 100,
+  "threshold": 0.9,
+  "intent_accuracy": 1,
+  "slot_exact_match_accuracy": 1,
+  "slot_denominator": 30,
+  "nonempty_slot_exact_match_accuracy": 1,
+  "nonempty_slot_denominator": 17,
+  "average_routing_ms": 0.0818871558731189,
+  "max_routing_ms": 1.24464399414137,
+  "rows": [
+    {
+      "text": "Покажи устройства",
+      "expected": "devices.list",
+      "actual": "devices.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Какие устройства сейчас подключены",
+      "expected": "devices.list",
+      "actual": "devices.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Перечисли компьютеры",
+      "expected": "devices.list",
+      "actual": "devices.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Список устройств",
+      "expected": "devices.list",
+      "actual": "devices.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Пожалуйста, покажи все устройства",
+      "expected": "devices.list",
+      "actual": "devices.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Добавь задачу купить молоко",
+      "expected": "tasks.create",
+      "actual": "tasks.create",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "title": "купить молоко"
+      }
+    },
+    {
+      "text": "Создай задачу проверить отчёт",
+      "expected": "tasks.create",
+      "actual": "tasks.create",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "title": "проверить отчёт"
+      }
+    },
+    {
+      "text": "Добавь новую задачу подготовить презентацию",
+      "expected": "tasks.create",
+      "actual": "tasks.create",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "title": "подготовить презентацию"
+      }
+    },
+    {
+      "text": "Создай задачу позвонить маме",
+      "expected": "tasks.create",
+      "actual": "tasks.create",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "title": "позвонить маме"
+      }
+    },
+    {
+      "text": "Добавь задачу купить хлеб и молоко",
+      "expected": "tasks.create",
+      "actual": "tasks.create",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "title": "купить хлеб и молоко"
+      }
+    },
+    {
+      "text": "Покажи задачи",
+      "expected": "tasks.list",
+      "actual": "tasks.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Список задач",
+      "expected": "tasks.list",
+      "actual": "tasks.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Покажи выполненные задачи",
+      "expected": "tasks.list",
+      "actual": "tasks.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "status": "done"
+      }
+    },
+    {
+      "text": "Перечисли все задачи",
+      "expected": "tasks.list",
+      "actual": "tasks.list",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Заверши задачу купить молоко",
+      "expected": "tasks.complete",
+      "actual": "tasks.complete",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "id": "30000000-0000-0000-0000-000000000001"
+      }
+    },
+    {
+      "text": "Закрой задачу проверить отчёт",
+      "expected": "tasks.complete",
+      "actual": "tasks.complete",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "id": "30000000-0000-0000-0000-000000000002"
+      }
+    },
+    {
+      "text": "Отметь задачу купить молоко выполненной",
+      "expected": "tasks.complete",
+      "actual": "tasks.complete",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "id": "30000000-0000-0000-0000-000000000001"
+      }
+    },
+    {
+      "text": "Пожалуйста, заверши задачу проверить отчёт",
+      "expected": "tasks.complete",
+      "actual": "tasks.complete",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "id": "30000000-0000-0000-0000-000000000002"
+      }
+    },
+    {
+      "text": "Открой Диплом",
+      "expected": "workspaces.launch",
+      "actual": "workspaces.launch",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "workspace_id": "20000000-0000-0000-0000-000000000001",
+        "device_id": "10000000-0000-0000-0000-000000000001"
+      }
+    },
+    {
+      "text": "Запусти рабочее пространство Диплом на Ноутбук",
+      "expected": "workspaces.launch",
+      "actual": "workspaces.launch",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "workspace_id": "20000000-0000-0000-0000-000000000001",
+        "device_id": "10000000-0000-0000-0000-000000000001"
+      }
+    },
+    {
+      "text": "Открой Проект Омега на Кабинет",
+      "expected": "workspaces.launch",
+      "actual": "workspaces.launch",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "workspace_id": "20000000-0000-0000-0000-000000000002",
+        "device_id": "10000000-0000-0000-0000-000000000002"
+      }
+    },
+    {
+      "text": "Открой пространство Диплом на этом компьютере",
+      "expected": "workspaces.launch",
+      "actual": "workspaces.launch",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "workspace_id": "20000000-0000-0000-0000-000000000001",
+        "device_id": "10000000-0000-0000-0000-000000000001"
+      }
+    },
+    {
+      "text": "Включи свет",
+      "expected": "iot.set_light",
+      "actual": "iot.set_light",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "enabled": true
+      }
+    },
+    {
+      "text": "Выключи рабочий свет",
+      "expected": "iot.set_light",
+      "actual": "iot.set_light",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "enabled": false
+      }
+    },
+    {
+      "text": "Включи настольную лампу",
+      "expected": "iot.set_light",
+      "actual": "iot.set_light",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "enabled": true
+      }
+    },
+    {
+      "text": "Выключи свет на Кабинет",
+      "expected": "iot.set_light",
+      "actual": "iot.set_light",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {
+        "enabled": false,
+        "device_name": "Кабинет"
+      }
+    },
+    {
+      "text": "Какая сейчас температура",
+      "expected": "iot.get_temperature",
+      "actual": "iot.get_temperature",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Покажи температуру",
+      "expected": "iot.get_temperature",
+      "actual": "iot.get_temperature",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Узнай температуру",
+      "expected": "iot.get_temperature",
+      "actual": "iot.get_temperature",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Температура в комнате",
+      "expected": "iot.get_temperature",
+      "actual": "iot.get_temperature",
+      "intent_correct": true,
+      "slots_correct": true,
+      "arguments": {}
+    },
+    {
+      "text": "Почему компьютер не подключается",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Не включай свет",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Покажи устройства и создай задачу купить молоко",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Если будет темно, включи свет",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Создай задачу проверить отчёт до пятницы",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Открой неизвестный проект",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Заверши задачу",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Покажи задачи и объясни приоритеты",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Заверши задачу написать книгу",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    },
+    {
+      "text": "Выключи свет через пять минут",
+      "expected": null,
+      "actual": null,
+      "intent_correct": true,
+      "slots_correct": null,
+      "arguments": null
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+{
+  "voice": "macOS Milena",
+  "rate": 170,
+  "samples": [
+    {
+      "index": 0,
+      "text": "Покажи устройства",
+      "duration_seconds": 1.300375,
+      "sha256": "155a6cf57e65755e2df0256a0867aa74e9441161a692b687aa71e5f75159deec"
+    },
+    {
+      "index": 1,
+      "text": "Какие устройства сейчас подключены",
+      "duration_seconds": 2.3220625,
+      "sha256": "dac7d7c936ff8a8abdd3acd0e93928b407146bb9228715c2ee1c287b682da012"
+    },
+    {
+      "index": 2,
+      "text": "Перечисли компьютеры",
+      "duration_seconds": 1.3468125,
+      "sha256": "e651efc3fbd5cba05285edadc3bc74df681ed4b68250ee375c0e6c11fedeb940"
+    },
+    {
+      "index": 3,
+      "text": "Список устройств",
+      "duration_seconds": 1.2771875,
+      "sha256": "34e3c92cbea1256313fae7fa31f177330a2060e380a63213a730ed584453c2f8"
+    },
+    {
+      "index": 4,
+      "text": "Пожалуйста, покажи все устройства",
+      "duration_seconds": 2.461375,
+      "sha256": "394d262a4af384c2712833539d7e0870d9773dc0b695f30f2005b6730c6b0deb"
+    },
+    {
+      "index": 5,
+      "text": "Добавь задачу купить молоко",
+      "duration_seconds": 1.857625,
+      "sha256": "762f472ea7db23fdb1fb80b8fdb687879df5ff0cfaf0220c4f108cea896dd982"
+    },
+    {
+      "index": 6,
+      "text": "Создай задачу проверить отчёт",
+      "duration_seconds": 1.9273125,
+      "sha256": "9326eae6ff3d3bcbaa6814ec5ccedaeb38a3588afbb51a5396bc4db6c00aef82"
+    },
+    {
+      "index": 7,
+      "text": "Добавь новую задачу подготовить презентацию",
+      "duration_seconds": 2.856125,
+      "sha256": "a436962e1c5b06a9c3182f29acade647ad35224cc825dc2f953638addf71474f"
+    },
+    {
+      "index": 8,
+      "text": "Создай задачу позвонить маме",
+      "duration_seconds": 1.97375,
+      "sha256": "d089e6754c6f86d48a72b5755ffaf5d1776851b906235481dd9976243a834bf0"
+    },
+    {
+      "index": 9,
+      "text": "Добавь задачу купить хлеб и молоко",
+      "duration_seconds": 2.2059375,
+      "sha256": "a1ba455c669d6ec8ab4baa8ce7aee0130ef4f8b6cd1f3ec34aef7144c255276f"
+    },
+    {
+      "index": 10,
+      "text": "Покажи задачи",
+      "duration_seconds": 1.114625,
+      "sha256": "e9474471d3368f9d60d34736d0b8aec4bff0f60929790043745bd43a61b0327b"
+    },
+    {
+      "index": 11,
+      "text": "Список задач",
+      "duration_seconds": 1.091375,
+      "sha256": "259ca6abf0a272a3dbabbb980e62c05e5f93daf164989d1ca412829cf6783a84"
+    },
+    {
+      "index": 12,
+      "text": "Покажи выполненные задачи",
+      "duration_seconds": 1.7415625,
+      "sha256": "156bb911d223514f711aba9bae1b5af035709515212b49f72bfacbdbe7f1a7ce"
+    },
+    {
+      "index": 13,
+      "text": "Перечисли все задачи",
+      "duration_seconds": 1.4629375,
+      "sha256": "476200fde458d68d5ce4e6e77c1e35f2927362c4ba4bd3d53a623b871d2100b3"
+    },
+    {
+      "index": 14,
+      "text": "Заверши задачу купить молоко",
+      "duration_seconds": 1.97375,
+      "sha256": "41d9f6ae00e965933f3d9ae59cbb33bf9efe97ee942e4feacb1218faca784fd2"
+    },
+    {
+      "index": 15,
+      "text": "Закрой задачу проверить отчёт",
+      "duration_seconds": 1.904125,
+      "sha256": "450bd5b38c93c0cfcf1108b99d436933906891010824df4d52405113ba2659d2"
+    },
+    {
+      "index": 16,
+      "text": "Отметь задачу купить молоко выполненной",
+      "duration_seconds": 2.5078125,
+      "sha256": "d1c2657398ecd7f64ef93979c38abcb6d5dccff52fd9014f9820511cfc26ed6b"
+    },
+    {
+      "index": 17,
+      "text": "Пожалуйста, заверши задачу проверить отчёт",
+      "duration_seconds": 2.92575,
+      "sha256": "5e1675fc00bfd9336c13c032ce433b465e2602eb860fbb9935838a54515161ae"
+    },
+    {
+      "index": 18,
+      "text": "Открой Диплом",
+      "duration_seconds": 1.02175,
+      "sha256": "9da66d4ae36e18ed92b0ffebd4ebd016b280e3b5e12915657f25da4aac54e836"
+    },
+    {
+      "index": 19,
+      "text": "Запусти рабочее пространство Диплом на Ноутбук",
+      "duration_seconds": 2.949,
+      "sha256": "bccadf151de4a1e92007acc33614f5a1289b1272f27ff5eabca9f5654443860e"
+    },
+    {
+      "index": 20,
+      "text": "Открой Проект Омега на Кабинет",
+      "duration_seconds": 1.9505625,
+      "sha256": "3ed9c7c8deaac44ae1d4e6f59ebaee4e928f916900b481c8d7b4b457e24d17ad"
+    },
+    {
+      "index": 21,
+      "text": "Открой пространство Диплом на этом компьютере",
+      "duration_seconds": 2.7864375,
+      "sha256": "b0089433c6fc4e66c516190a27dc82a4061c0066421f49c7dfbfc399be7ec018"
+    },
+    {
+      "index": 22,
+      "text": "Включи свет",
+      "duration_seconds": 0.9753125,
+      "sha256": "da35beb2f1cda1bc4147633e6de86ad1a5cf308140bbe68c57cb75bc872ce913"
+    },
+    {
+      "index": 23,
+      "text": "Выключи рабочий свет",
+      "duration_seconds": 1.39325,
+      "sha256": "f7333cace402dc9048d1373d7c70a88159002d9f0a79aaceff03636cf03a2e2a"
+    },
+    {
+      "index": 24,
+      "text": "Включи настольную лампу",
+      "duration_seconds": 1.5558125,
+      "sha256": "c737b4a41669f940d3c5b8f1b625c43993e8fcffa9105f9a487b51bb92f3909e"
+    },
+    {
+      "index": 25,
+      "text": "Выключи свет на Кабинет",
+      "duration_seconds": 1.5325625,
+      "sha256": "b5572f95ff2d21b50590f84fc981c1f0ce04ae465dd67cd053fcea08014fa6ec"
+    },
+    {
+      "index": 26,
+      "text": "Какая сейчас температура",
+      "duration_seconds": 1.7183125,
+      "sha256": "074646078ee85b8113b4c8a1b2f7d360dfd3a973a5ffe11e4a6aec1ccc8a4063"
+    },
+    {
+      "index": 27,
+      "text": "Покажи температуру",
+      "duration_seconds": 1.2306875,
+      "sha256": "c7eba5289e187dbb6079f6e1dfc4e1fe56f2a856e089b1e7bdf96551b125b349"
+    },
+    {
+      "index": 28,
+      "text": "Узнай температуру",
+      "duration_seconds": 1.1610625,
+      "sha256": "c4380847871f421eb3a004c8fb259631d4f4ba8b38b3b7327c2b3702a8e6332d"
+    },
+    {
+      "index": 29,
+      "text": "Температура в комнате",
+      "duration_seconds": 1.3700625,
+      "sha256": "acc77957023f833b74a37f938711c6a8f32fd12471b66d92bf6794788ba3b347"
+    },
+    {
+      "index": 30,
+      "text": "Почему компьютер не подключается",
+      "duration_seconds": 2.2059375,
+      "sha256": "5e91cea368a35f577a280ee4becf013bd679431b072e0176a8b75e2928b089bf"
+    },
+    {
+      "index": 31,
+      "text": "Не включай свет",
+      "duration_seconds": 1.114625,
+      "sha256": "454758397166593bcff5764b316ee7e1d1b50b594a4a7a89d51c7dc796783a20"
+    },
+    {
+      "index": 32,
+      "text": "Покажи устройства и создай задачу купить молоко",
+      "duration_seconds": 2.9721875,
+      "sha256": "4b5cccddfb22e9ab104db6caeab6ae8f00262f540657d57aececd143a3bd0713"
+    },
+    {
+      "index": 33,
+      "text": "Если будет темно, включи свет",
+      "duration_seconds": 2.3220625,
+      "sha256": "d0e10b1b7edbd78ea3d2c1e1ef53af4fca48f5133b8effcb5a2fbd573672e70a"
+    },
+    {
+      "index": 34,
+      "text": "Создай задачу проверить отчёт до пятницы",
+      "duration_seconds": 2.647125,
+      "sha256": "9568708561c7fc7e0069a3d749cc65498edf7148b14ce837e9d6eaea25b51e3b"
+    },
+    {
+      "index": 35,
+      "text": "Открой неизвестный проект",
+      "duration_seconds": 1.6486875,
+      "sha256": "09d6b0bae2a400ef68085fe00fdde0847182092b5e4ecfb32dd2a77bb529a9f7"
+    },
+    {
+      "index": 36,
+      "text": "Заверши задачу",
+      "duration_seconds": 1.2306875,
+      "sha256": "c826ca308ea6d7d409ce228048f53cc620fcef30e1f854a10ec6349b08088596"
+    },
+    {
+      "index": 37,
+      "text": "Покажи задачи и объясни приоритеты",
+      "duration_seconds": 2.2291875,
+      "sha256": "cc7331e92ed688505199ccefb4f2736450fef5702de81a5396133fbe62ce9871"
+    },
+    {
+      "index": 38,
+      "text": "Заверши задачу написать книгу",
+      "duration_seconds": 2.0434375,
+      "sha256": "dffdeedc53945ed22af4ef097e3b528bbb5e2baafe37eba83bd539fe3797492f"
+    },
+    {
+      "index": 39,
+      "text": "Выключи свет через пять минут",
+      "duration_seconds": 1.76475,
+      "sha256": "3378d2d330ff86b53c969e233067c99ec0fdd5e598cc0a1f0e0729bb280735bf"
+    }
+  ]
+}

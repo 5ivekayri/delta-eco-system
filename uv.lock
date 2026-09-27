@@ -172,6 +172,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+stt = [
+    { name = "faster-whisper" },
+]
 test = [
     { name = "build" },
     { name = "pytest" },
@@ -187,6 +190,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.14,<2" },
     { name = "build", marker = "extra == 'test'", specifier = ">=1.2,<2" },
     { name = "fastapi", specifier = ">=0.115,<1" },
+    { name = "faster-whisper", marker = "extra == 'stt'", specifier = ">=1.1,<2" },
     { name = "faster-whisper", marker = "extra == 'voice'", specifier = ">=1.1,<2" },
     { name = "httpx", specifier = ">=0.28,<1" },
     { name = "jsonschema", specifier = ">=4.23,<5" },
@@ -200,7 +204,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34,<1" },
     { name = "websockets", specifier = ">=14,<16" },
 ]
-provides-extras = ["test", "voice"]
+provides-extras = ["test", "stt", "voice"]
 
 [[package]]
 name = "fastapi"

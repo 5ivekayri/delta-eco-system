@@ -18,4 +18,4 @@ LLM selects registered, enabled tools. The registry validates local arguments wi
 
 ## Logs and voice
 
-Foundation request logs contain request ID, service ID, path, method, duration and success. They exclude authorization headers and bodies. Voice implementation must limit upload size, avoid arbitrary file paths, isolate temporary files and clean up audio. History and activity contain personal content; retention/export controls are future work and should be documented before multi-user use.
+Foundation request logs contain request ID, service ID, path, method, duration and success. They exclude authorization headers and bodies. Voice input enforces a bounded HTTP/multipart body and decoded duration, ignores user-supplied file paths, closes temporary uploads and runs local inference with one job at a time. Audio is not retained; transcript text is persisted and is sent to the configured LLM. Whisper models are provisioned explicitly, never downloaded during inference. Mock STT is an explicit test mode, never a fallback. History and activity contain personal content; retention/export controls are future work and should be documented before multi-user use.

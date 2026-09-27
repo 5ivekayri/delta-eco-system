@@ -12,7 +12,9 @@ Delta connects personal computers and independent services through a single text
 
 ## Request flow
 
-Text or recorded browser audio enters Core. Local STT produces text. LLMProvider receives context and enabled tool schemas; it returns structured calls. Tool Router validates arguments and dispatches to a local handler or manifest-defined HTTP adapter. Results and activity are persisted. Assistant returns text and optional local TTS audio. Provider failures have explicit error codes; TTS failure preserves successful tool execution and text.
+Text or recorded browser audio enters Core. Local STT produces text. An injected IntentRouter first proposes a local call, validated against available tool schemas; Assistant accepts it only above the configured confidence threshold. Other requests fall back to LLMProvider, which receives context and enabled tool schemas and returns structured calls. Tool Router validates arguments and dispatches to a local handler or manifest-defined HTTP adapter. Results and activity are persisted. Assistant returns text and optional local TTS audio. Provider failures have explicit error codes; TTS failure preserves successful tool execution and text.
+
+Local task-title resolution uses the registered Tasks read tool, never its database. Routing contracts, telemetry and measured STT tradeoffs: [LOCAL_INTENT_ROUTING.md](LOCAL_INTENT_ROUTING.md).
 
 Service manifests describe identity, health route, tools, input schemas, permissions and HTTP mapping. Registration is configuration-driven in v0.1. A new external service requires a manifest/config entry, not assistant business logic. A deterministic MockLLM supports documented demo phrases; OpenRouter supports general tool selection.
 
@@ -26,6 +28,6 @@ Development bearer token is configured at runtime. Bind public development ports
 
 ## Future interfaces
 
-IoTAdapter initially uses persistent virtual state. A future MQTT adapter connects Core → Mosquitto → Raspberry Pi sensors/GPIO without changing tools. Dark Weather will be an independent registered service. Neither is implemented in MVP. Future authentication may replace the development token without changing service boundaries.
+IoTAdapter currently uses persistent virtual state in Core's database. Four registered tools and the Virtual IoT UI share the adapter. Light changes and their audit events commit atomically; restart preserves state. See [VIRTUAL_IOT.md](VIRTUAL_IOT.md). A future MQTT adapter can connect Core through Mosquitto to Raspberry Pi sensors/GPIO without changing Assistant dispatch. MQTT/Raspberry Pi and the independent Dark Weather service remain deferred. Future authentication may replace the development token without changing service boundaries.
 
 Diagrams and verified deployment details will be added with the corresponding implementation phases.
