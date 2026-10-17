@@ -2,7 +2,7 @@
 
 Локально-ориентированная персональная AI-экосистема. Техническое задание: [prompt.rtf](prompt.rtf), текстовая копия: [docs/REQUIREMENTS.txt](docs/REQUIREMENTS.txt).
 
-**Статус:** фазы 1–6 проверены; доступны задачи, устройства, рабочие пространства, текстовый Assistant и голосовой ввод через локальный Whisper. По умолчанию LLM — mock; цепочка Whisper → OpenRouter → Tool проверена на этой установке. Это ещё не готовый MVP. Краткий прогресс: [PROGRESS.txt](PROGRESS.txt). Реализованные и оставшиеся этапы перечислены в [чеклисте](docs/IMPLEMENTATION_CHECKLIST.md).
+**Статус:** 10 фаз локальной разработки завершены; доступны задачи, устройства, рабочие пространства, текстовый Assistant и голосовой ввод через локальный Whisper. По умолчанию LLM — mock; цепочка Whisper → OpenRouter → Tool проверена на этой установке. Приёмка на всех целевых ОС ещё не завершена. Краткий прогресс: [PROGRESS.txt](PROGRESS.txt). Реализованные и оставшиеся этапы перечислены в [чеклисте](docs/IMPLEMENTATION_CHECKLIST.md).
 
 ## Структура
 
@@ -54,12 +54,29 @@ npm run dev
 
 Backend factories: `uvicorn delta_core.main:create_app --factory --port 8000` и `uvicorn delta_tasks.main:create_app --factory --port 8001`. Каждому процессу передайте его `DATABASE_URL` и общий `DELTA_TOKEN` через окружение; Tasks дополнительно `SERVICE_NAME=delta-tasks`. Vite проксирует `/core` и `/tasks-api` на эти порты.
 
-## Документация
+## Документация и спецификации
 
-- [Архитектура](docs/ARCHITECTURE.md)
-- [Границы MVP](docs/MVP_SCOPE.md)
-- [Этапы и результаты проверок](docs/IMPLEMENTATION_CHECKLIST.md)
-- [Правила разработки](AGENTS.md)
+Начните с [развёртывания на Linux](docs/LINUX_DEPLOYMENT.md).
+
+| Раздел | Спецификация |
+|---|---|
+| Установка Linux, сеть, HTTPS, Agent | [LINUX_DEPLOYMENT.md](docs/LINUX_DEPLOYMENT.md) |
+| Переменные окружения и профили | [CONFIGURATION.md](docs/CONFIGURATION.md) |
+| Backup, restore, обновление, диагностика | [OPERATIONS.md](docs/OPERATIONS.md) |
+| Приёмка релиза | [RELEASE_ACCEPTANCE.md](docs/RELEASE_ACCEPTANCE.md) |
+| Архитектура и границы MVP | [ARCHITECTURE.md](docs/ARCHITECTURE.md), [MVP_SCOPE.md](docs/MVP_SCOPE.md) |
+| Контекст диалога и ссылки на задачи | [ASSISTANT_CONTEXT.md](docs/ASSISTANT_CONTEXT.md) |
+| Голосовой pipeline и нейроголоса | [VOICE_PIPELINE.md](docs/VOICE_PIPELINE.md), [NEURAL_VOICE.md](docs/NEURAL_VOICE.md) |
+| Маршрутизация и измерения | [LOCAL_INTENT_ROUTING.md](docs/LOCAL_INTENT_ROUTING.md), [VOICE_LATENCY.md](docs/VOICE_LATENCY.md) |
+| Agent и интеграция сервисов | [DEVICE_PROTOCOL.md](docs/DEVICE_PROTOCOL.md), [SERVICE_INTEGRATION.md](docs/SERVICE_INTEGRATION.md) |
+| Activity и IoT | [ACTIVITY_AND_SERVICES.md](docs/ACTIVITY_AND_SERVICES.md), [VIRTUAL_IOT.md](docs/VIRTUAL_IOT.md) |
+| Безопасность | [SECURITY.md](docs/SECURITY.md) |
+| Демо и прогресс | [DEMO_AND_ACCEPTANCE.md](docs/DEMO_AND_ACCEPTANCE.md), [IMPLEMENTATION_CHECKLIST.md](docs/IMPLEMENTATION_CHECKLIST.md) |
+| Дальнейшие планы и правила | [FUTURE_ROADMAP.md](docs/FUTURE_ROADMAP.md), [AGENTS.md](AGENTS.md) |
+
+При изменении поведения, API, конфигурации или развёртывания обновляйте связанную
+спецификацию; новые документы добавляйте в эту таблицу. Отделяйте проверенные результаты
+от запланированных функций и указывайте ограничения/способ проверки.
 
 Task CRUD, Service Registry, рабочие пространства, голосовой Assistant с Piper и виртуальный IoT реализованы. Простые команды выполняются через Tool Registry без LLM. Запуск Windows/Linux пока проверяется через mocks.
 

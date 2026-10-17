@@ -11,3 +11,5 @@ Read docs/REQUIREMENTS.txt, extracted from the original prompt.rtf.
 - Weather, real MQTT/IoT, Raspberry Pi, semantic memory and automation are deferred. Keep extension interfaces; avoid unnecessary infrastructure.
 - Follow phases in docs/IMPLEMENTATION_CHECKLIST.md. Build, test, check backend/frontend and fix regressions before advancing. Record actual verification and limitations honestly.
 - Configure secrets through environment. Do not commit credentials or log tokens.
+
+- Maintain specifications alongside behavior/API/configuration/deployment changes. Link new specs from README.md; record verified behavior, acceptance checks and known limitations. Keep Linux deployment and operations instructions aligned with Compose.
