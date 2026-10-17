@@ -23,6 +23,7 @@ services:
       args:
         INSTALL_STT: "true"
         INSTALL_VOICE: "true"
+        INSTALL_NEURAL: ${INSTALL_NEURAL:-false}
     command: [sh, -c, 'alembic -c apps/delta-core/alembic.ini upgrade head && exec uvicorn delta_core.main:create_app --factory --host 0.0.0.0 --port 8000']
     environment:
       DATABASE_URL: postgresql+psycopg://delta_core:${CORE_DB_PASSWORD}@postgres/delta_core
@@ -42,6 +43,12 @@ services:
       WHISPER_LANGUAGE: ${WHISPER_LANGUAGE:-ru}
       VOICE_MAX_SECONDS: ${VOICE_MAX_SECONDS:-60}
       MOCK_STT_TRANSCRIPT: ${MOCK_STT_TRANSCRIPT:-покажи устройства}
+      QWEN_TTS_MODEL: /models/qwen
+      QWEN_TTS_DEVICE: ${QWEN_TTS_DEVICE:-cpu}
+      QWEN_TTS_SPEAKER: ${QWEN_TTS_SPEAKER:-serena}
+      QWEN_TTS_PREVIEW_TIMEOUT_SECONDS: ${QWEN_TTS_PREVIEW_TIMEOUT_SECONDS:-120}
+      QWEN_TTS_THREADS: ${QWEN_TTS_THREADS:-4}
+      QWEN_TTS_TIMEOUT_SECONDS: ${QWEN_TTS_TIMEOUT_SECONDS:-20}
       TTS_PROVIDER: ${TTS_PROVIDER:-piper}
       PIPER_MODEL: ${PIPER_MODEL:-/models/piper/ru_RU-irina-medium.onnx}
       TTS_MAX_CHARS: ${TTS_MAX_CHARS:-1500}
@@ -50,6 +57,7 @@ services:
     volumes:
       - whisper-models:/models/whisper
       - piper-models:/models/piper
+      - ${QWEN_MODEL_VOLUME:-qwen-models}:/models/qwen
     ports: ['127.0.0.1:8000:8000']
     depends_on:
       postgres: {condition: service_healthy}
@@ -77,11 +85,12 @@ services:
   delta-control-center:
     build:
       context: apps/delta-control-center
-    ports: ['127.0.0.1:8080:80']
+    ports: ['127.0.0.1:${DELTA_UI_PORT:-8080}:80']
     depends_on:
       delta-core: {condition: service_healthy}
       delta-tasks: {condition: service_healthy}
 volumes:
   whisper-models:
   piper-models:
+  qwen-models:
   postgres-data:

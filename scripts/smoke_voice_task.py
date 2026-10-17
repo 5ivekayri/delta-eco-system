@@ -14,15 +14,16 @@ import httpx
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('audio',type=Path,help='WAV with a short Russian task creation command')
+    parser.add_argument('--url',default='http://127.0.0.1:8080',help='Control Center URL')
     args=parser.parse_args()
     root=Path(__file__).resolve().parents[1]
     token=dotenv_values(root/'.env')['DELTA_TOKEN']
-    with httpx.Client(base_url='http://127.0.0.1:8080',headers={'Authorization':f'Bearer {token}'},timeout=180) as client:
+    with httpx.Client(base_url=args.url,headers={'Authorization':f'Bearer {token}'},timeout=180) as client:
         before=client.get('/tasks-api/api/v1/tasks');before.raise_for_status()
         existing={row['id'] for row in before.json()}
         task_id=None
         try:
-            response=client.post('/core/api/v1/assistant/voice',files={'audio':('command.wav',args.audio.read_bytes(),'audio/wav')})
+            response=client.post('/core/api/v1/assistant/voice',data={'voice_id':'piper'},files={'audio':('command.wav',args.audio.read_bytes(),'audio/wav')})
             response.raise_for_status();body=response.json()
             created=[r for r in body['tool_results'] if r['tool']=='tasks.create' and r['success']]
             assert len(created)==1, 'Expected one successful task creation'

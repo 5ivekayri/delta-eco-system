@@ -82,13 +82,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         router_provider = OpenRouterLLMProvider(settings.openrouter_api_key,
             settings.delta_router_model or settings.openrouter_model, app.state.llm_http,
             router=True, max_tokens=settings.delta_router_max_tokens)
+    from delta_core.assistant.context_intents import ConversationIntentRouter
+    task_lookup = RegistryTaskLookup(app.state.tools)
     app.state.assistant = AssistantService(app.state.engine, app.state.tools, provider, router_provider,
-        local_router=LocalIntentRouter(RegistryTaskLookup(app.state.tools)),
+        local_router=ConversationIntentRouter(LocalIntentRouter(task_lookup), task_lookup),
         local_threshold=settings.delta_local_intent_threshold)
-    if settings.tts_provider not in {'piper', 'mock', 'disabled'}:
-        raise ValueError('TTS_PROVIDER must be piper, mock or disabled')
+    if settings.tts_provider not in {'piper', 'qwen', 'mock', 'disabled'}:
+        raise ValueError('TTS_PROVIDER must be piper, qwen, mock or disabled')
     app.state.tts = (PiperTTSProvider(settings.piper_model, settings.tts_max_chars, settings.tts_max_seconds)
                      if settings.tts_provider == 'piper' else MockTTSProvider() if settings.tts_provider == 'mock' else None)
+    if settings.tts_provider == 'qwen':
+        from delta_core.voice.neural import NeuralTTSProvider
+        app.state.tts = NeuralTTSProvider(settings, PiperTTSProvider(
+            settings.piper_model, settings.tts_max_chars, settings.tts_max_seconds))
     app.include_router(assistant_router)
     if settings.stt_provider not in {'mock', 'whisper'}:
         raise ValueError('STT_PROVIDER must be mock or whisper')

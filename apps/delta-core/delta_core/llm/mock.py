@@ -23,7 +23,8 @@ def describe_result(result:dict)->str:
 class MockLLMProvider(LLMProvider):
     async def respond(self,messages,tools,context):
         if messages[-1]['role']=='tool':
-            results=[json.loads(m['content']) for m in messages if m['role']=='tool']
+            current = max((i for i, m in enumerate(messages) if m['role'] == 'user'), default=-1)
+            results=[json.loads(m['content']) for m in messages[current + 1:] if m['role']=='tool']
             return LLMTurn(text='\n'.join(describe_result(r) for r in results))
         message=messages[-1]['content'];lower=message.casefold()
         workspace=next((w for w in context.get('workspaces',[]) if w['name'].casefold() in lower or

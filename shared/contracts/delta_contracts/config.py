@@ -1,3 +1,4 @@
+from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,6 +28,12 @@ class Settings(BaseSettings):
     voice_max_seconds: int = Field(default=60, ge=1, le=120)
     mock_stt_transcript: str = "покажи устройства"
     tts_provider: str = "piper"
+    qwen_tts_model: str = "/models/qwen"
+    qwen_tts_device: str = "cpu"
+    qwen_tts_speaker: Literal['serena', 'vivian', 'ryan', 'aiden'] = 'serena'
+    qwen_tts_threads: int = Field(default=4, ge=1, le=32)
+    qwen_tts_preview_timeout_seconds: float = Field(default=120, ge=1, le=180)
+    qwen_tts_timeout_seconds: float = Field(default=20, ge=.1, le=120)
     piper_model: str = ".runtime/piper/ru_RU-irina-medium.onnx"
     tts_max_chars: int = Field(default=1500, ge=100, le=5000)
     tts_max_seconds: int = Field(default=60, ge=1, le=120)

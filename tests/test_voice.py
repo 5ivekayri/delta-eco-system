@@ -100,3 +100,48 @@ async def test_whisper_busy_does_not_wait_for_another_job(tmp_path):
         assert error.value.code == 'STT_BUSY'
     finally:
         provider._lock.release()
+
+
+def test_system_voice_skips_server_synthesis_without_repeating_tools(client):
+    client.app.state.tts=type('TTS',(),{'synthesize':AsyncMock(return_value=wav())})()
+    response=client.post('/api/v1/assistant/voice',data={'tts_mode':'system'},files={'audio':('voice.wav',wav(),'audio/wav')})
+    assert response.status_code==200
+    body=response.json()
+    assert body['tts_mode']=='system' and body['timings']['tts_status']=='client'
+    assert body['audio_available'] is False and len(body['tool_results'])==1
+    client.app.state.tts.synthesize.assert_not_called()
+
+
+def test_speech_fallback_only_synthesizes_never_calls_assistant(client):
+    client.app.state.assistant.message=AsyncMock()
+    client.app.state.tts=type('TTS',(),{'synthesize':AsyncMock(return_value=wav())})()
+    response=client.post('/api/v1/assistant/voice/synthesize',json={'text':'Готово'})
+    assert response.status_code==200 and response.json()['audio_base64']
+    client.app.state.assistant.message.assert_not_called()
+    client.app.state.tts.synthesize.assert_awaited_once_with('Готово')
+    assert client.post('/api/v1/assistant/voice/synthesize',json={'text':'Готово'},headers={'Authorization':'bad'}).status_code==401
+    for body in [{'text':''},{'text':'x'*10001},{'text':'ok','tool':'tasks.create'}]:
+        assert client.post('/api/v1/assistant/voice/synthesize',json=body).status_code==422
+
+
+def test_speech_fallback_disabled_and_timeout(client):
+    assert client.post('/api/v1/assistant/voice/synthesize',json={'text':'Готово'}).status_code==503
+    client.app.state.tts=type('TTS',(),{'synthesize':AsyncMock(side_effect=TimeoutError)})()
+    assert client.post('/api/v1/assistant/voice/synthesize',json={'text':'Готово'}).json()['error_code']=='TTS_TIMEOUT'
+
+
+def test_neural_voice_selection_and_fallback_never_repeat_action(client):
+    from delta_core.voice.neural import NeuralTTSProvider
+    tts = NeuralTTSProvider(client.app.state.settings, AsyncMock())
+    tts.synthesize_profile = AsyncMock(return_value=(wav(), {'tts_provider':'piper','voice_id':'piper','tts_fallback_reason':'TTS_BUSY'}))
+    client.app.state.tts = tts
+    assistant = client.app.state.assistant
+    assistant.message = AsyncMock(wraps=assistant.message)
+    response = client.post('/api/v1/assistant/voice', data={'voice_id':'serena'}, files={'audio':('voice.wav',wav(),'audio/wav')})
+    assert response.status_code == 200
+    assert response.json()['tts_fallback_reason'] == 'TTS_BUSY'
+    assert len(response.json()['tool_results']) == 1
+    assistant.message.assert_awaited_once()
+    assert tts.synthesize_profile.call_args.args[1:] == ('serena', False)
+    assert client.post('/api/v1/assistant/voice', data={'voice_id':'invalid'}, files={'audio':('voice.wav',wav(),'audio/wav')}).status_code == 422
+    assistant.message.assert_awaited_once()

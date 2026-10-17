@@ -1,4 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
+import {EndOfSpeech} from './EndOfSpeech';
+import {WorkingIndicator} from './WorkingIndicator';
+import {acknowledge,prepareFeedback,releaseFeedback,cancelSpeech} from './speech';
 import {Mic, Square, X} from 'lucide-react';
 import {ApiError, AssistantResponse, getVoiceConfig, sendVoice, VoiceConfig, VoiceTimings} from './api';
 
@@ -12,6 +15,10 @@ type Props = {
 
 export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Props) {
   const [state, setState] = useState<'idle'|'permission'|'recording'|'processing'>('idle');
+  const [level,setLevel]=useState(0);
+  const [autoActive,setAutoActive]=useState(false);
+  const meter=useRef<AudioContext|null>(null);
+  const detectorTimer=useRef<ReturnType<typeof setInterval>|null>(null);
   const [seconds, setSeconds] = useState(0);
   const [config, setConfig] = useState<VoiceConfig | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
@@ -27,6 +34,10 @@ export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Prop
   function release() {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
+    if(detectorTimer.current)clearInterval(detectorTimer.current);
+    detectorTimer.current=null;
+    const context=meter.current;meter.current=null;
+    if(context)void context.close().catch(()=>{});
     stream.current?.getTracks().forEach(track => track.stop());
     stream.current = null;
   }
@@ -40,6 +51,7 @@ export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Prop
       if (recorder.current?.state === 'recording') recorder.current.stop();
       release();
       controller.current?.abort();
+      releaseFeedback();
       callbacks.current.onBusy(false);
     };
   }, []);
@@ -52,7 +64,7 @@ export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Prop
       recorder.current.stop();
     }
     release();
-    if (cancel) {setState('idle'); callbacks.current.onBusy(false);}
+    if (cancel) {cancelSpeech();setState('idle'); callbacks.current.onBusy(false);}
   }
 
   async function start() {
@@ -61,6 +73,7 @@ export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Prop
       onError('Микрофон недоступен. Откройте Delta через localhost или HTTPS; текстовый чат доступен.');
       return;
     }
+    cancelSpeech();prepareFeedback();
     const attempt = ++generation.current;
     cancelled.current = false;
     recordingEndedAt.current = null;
@@ -102,19 +115,44 @@ export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Prop
           callbacks.current.onError('Запись пустая. Попробуйте ещё раз.'); return;
         }
         setState('processing');
+        acknowledge();
         controller.current = new AbortController();
         try {
-          const result = await sendVoice(audio, deviceId, controller.current.signal, recordingEndedAt.current ?? performance.now());
+          const result = await sendVoice(audio, deviceId, controller.current.signal, recordingEndedAt.current ?? performance.now(), 'server');
           if (attempt === generation.current) callbacks.current.onResult(result);
         } catch (error) {
           if (attempt === generation.current) callbacks.current.onError((error as Error).message, (error as ApiError).transcript, (error as ApiError).timings);
         } finally {
-          if (attempt === generation.current) {setState('idle'); callbacks.current.onBusy(false);}
+          if (attempt === generation.current) {cancelSpeech();setState('idle'); callbacks.current.onBusy(false);}
         }
       };
       current.start(250);
       setSeconds(0); setState('recording');
       const began = Date.now();
+      setAutoActive(false);
+      try {
+        const context=new AudioContext();meter.current=context;
+        void context.resume().catch(()=>setAutoActive(false));
+        if(attempt!==generation.current||current.state!=='recording'){release();return;}
+        const source=context.createMediaStreamSource(media),analyser=context.createAnalyser();
+        analyser.fftSize=1024;source.connect(analyser);
+        const samples=new Float32Array(analyser.fftSize);
+        const autoStop=localStorage.getItem('delta-auto-stop')!=='false';
+        const stored=Number(localStorage.getItem('delta-silence-ms')||1800);
+        const endpoint=new EndOfSpeech([1200,1800,2500].includes(stored)?stored:1800);
+        setAutoActive(autoStop&&context.state==='running');
+        context.onstatechange=()=>{if(attempt===generation.current&&current.state==='recording')setAutoActive(autoStop&&context.state==='running');};
+        detectorTimer.current=setInterval(()=>{
+          if(current.state!=='recording'||attempt!==generation.current||context.state!=='running')return;
+          analyser.getFloatTimeDomainData(samples);
+          const rms=Math.sqrt(samples.reduce((sum,x)=>sum+x*x,0)/samples.length);setLevel(rms);
+          if(autoStop){
+            const decision=endpoint.sample(rms,Date.now()-began);
+            if(decision==='end')stop();
+            if(decision==='no-speech'){stop(true);callbacks.current.onError('Речь не обнаружена. Проверьте микрофон и попробуйте снова.');}
+          }
+        },50);
+      }catch{setAutoActive(false);/* Manual stop and duration cap remain available. */}
       timer.current = setInterval(() => {
         const elapsed = Math.floor((Date.now()-began)/1000);
         setSeconds(elapsed);
@@ -130,7 +168,7 @@ export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Prop
     }
   }
 
-  return <div className="voice-input">
+  return <><div className="voice-input">
     <button type="button" className={state==='recording' ? 'voice-recording' : ''}
       aria-label={state==='recording' ? 'Остановить и отправить запись' : 'Записать голосовое сообщение'}
       disabled={state==='permission'||state==='processing'||(disabled&&state==='idle')}
@@ -138,10 +176,10 @@ export function VoiceInput({disabled, deviceId, onResult, onError, onBusy}: Prop
       {state==='recording' ? <Square size={18}/> : <Mic size={18}/>}
       {state==='recording' ? `Запись ${seconds} с` : 'Голос'}
     </button>
-    {state==='recording'&&<button type="button" aria-label="Отменить запись" onClick={()=>stop(true)}><X size={16}/></button>}
+    {(state==='recording'||state==='permission')&&<button type="button" aria-label="Отменить запись" onClick={()=>stop(true)}><X size={16}/></button>}
     <span role="status">{state==='permission' ? 'Ожидание доступа к микрофону…' :
-      state==='processing' ? 'Распознавание и обработка сообщения…' :
-      state==='recording' ? `Остановите запись, чтобы отправить. Лимит ${config?.max_seconds} с.` :
+      state==='processing' ? 'Запись принята в обработку.' :
+      state==='recording' ? `${autoActive?'Отправлю после паузы.':'Остановите запись, чтобы отправить.'} Лимит ${config?.max_seconds} с.` :
       config?.provider==='mock' ? 'Тестовый режим: вместо речи используется заданная тестовая фраза.' : 'Нажмите, чтобы записать сообщение.'}</span>
-  </div>;
+  </div>{state==='recording'&&<WorkingIndicator recording level={level} text="Слушаю вас"/>}{state==='processing'&&<WorkingIndicator text="Секунду, обрабатываю…"/>}</>;
 }

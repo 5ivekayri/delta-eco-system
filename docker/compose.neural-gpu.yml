@@ -1,0 +1,12 @@
+# NVIDIA Linux server with NVIDIA Container Toolkit installed.
+# docker compose -f docker-compose.yml -f docker/compose.neural-gpu.yml up --build -d
+services:
+  delta-core:
+    build:
+      args:
+        INSTALL_NEURAL: "true"
+        NEURAL_FLAVOR: cuda
+    environment:
+      TTS_PROVIDER: qwen
+      QWEN_TTS_DEVICE: cuda:0
+    gpus: all

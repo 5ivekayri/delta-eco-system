@@ -1,5 +1,6 @@
 """Check empty-volume bootstrap with built images; preserve the running Delta project."""
 import argparse
+import base64
 import io
 import json
 import os
@@ -16,7 +17,10 @@ from seed_demo import seed
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--docker',default='docker')
+    parser.add_argument('--voice-audio',type=Path,help='Provision fresh Whisper/Piper models and verify a WAV command listing devices')
     args=parser.parse_args()
+    if args.voice_audio and not args.voice_audio.is_file():
+        parser.error('--voice-audio must name an existing WAV file')
     root=Path(__file__).resolve().parents[1]
     project='delta-acceptance-'+secrets.token_hex(4)
     directory=root/'.runtime'/project
@@ -34,6 +38,7 @@ def main():
         def compose(*arguments):
             subprocess.run([*command,*arguments],cwd=root,env=environment,stdout=log,stderr=subprocess.STDOUT,check=True)
         try:
+            print(f'Isolated project: {project}; log: {directory}/compose.log',flush=True)
             compose('up','-d','--no-build','--wait','--wait-timeout','180')
             checks.append('empty PostgreSQL bootstrap and service health')
             with httpx.Client(base_url='http://127.0.0.1:18080',headers={'Authorization':f"Bearer {values['DELTA_TOKEN']}"},timeout=30) as client:
@@ -67,6 +72,12 @@ def main():
                 response=client.post('/core/api/v1/assistant/voice',files={'audio':('silence.wav',audio.getvalue(),'audio/wav')})
                 assert response.status_code==503 and response.json()['error_code']=='STT_UNAVAILABLE'
                 checks.append('empty model cache returns explicit STT_UNAVAILABLE')
+                if args.voice_audio:
+                    print('Downloading Whisper into the empty model volume...',flush=True)
+                    compose('exec','-T','delta-core','python','-m','delta_core.voice.provision')
+                    print('Downloading Piper into the empty model volume...',flush=True)
+                    compose('exec','-T','delta-core','python','-m','delta_core.voice.provision_tts')
+                    checks.append('fresh Whisper and Piper model provisioning')
                 compose('restart','delta-core','delta-tasks')
                 deadline=time.monotonic()+90
                 while time.monotonic()<deadline:
@@ -79,8 +90,21 @@ def main():
                 else:
                     raise AssertionError('Persistence after restart failed')
                 checks.append('Core and Tasks persistence after restart')
+                if args.voice_audio:
+                    response=client.post('/core/api/v1/assistant/voice',
+                        files={'audio':('command.wav',args.voice_audio.read_bytes(),'audio/wav')},timeout=180)
+                    response.raise_for_status();voice=response.json()
+                    assert voice['route_source']=='local'
+                    assert len(voice['tool_results'])==1 and voice['tool_results'][0]['tool']=='devices.list'
+                    assert voice['tool_results'][0]['success']
+                    assert voice['timings']['router_calls']==voice['timings']['response_generation_calls']==0
+                    assert voice['audio_available'] and voice['tts_provider']=='piper'
+                    with wave.open(io.BytesIO(base64.b64decode(voice['audio_base64'])),'rb') as wav:
+                        assert wav.getnframes()>0 and wav.getframerate()>0
+                    checks.append('fresh models: real WAV to Whisper to local devices.list to Piper WAV')
+                    (directory/'voice-timings.json').write_text(json.dumps(voice['timings'],indent=2)+'\n')
             report={'project':project,'checks':checks,'elapsed_seconds':round(time.monotonic()-started,2),
-                    'models':'empty volumes; unavailable path checked, downloads not performed'}
+                    'models':'fresh downloads and real voice verified' if args.voice_audio else 'empty volumes; unavailable path checked, downloads not performed'}
             (directory/'report.json').write_text(json.dumps(report,indent=2)+'\n')
             print(json.dumps(report,indent=2),flush=True)
         finally:

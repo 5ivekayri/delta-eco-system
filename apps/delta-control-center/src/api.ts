@@ -53,16 +53,19 @@ export interface VoiceTimings {
   execution_path:string; router_calls:number; response_generation_calls:number;
   tts_status:string;
 }
-export interface AssistantResponse {route_source?:'local'|'llm'; local_router_ms?:number; confidence?:number; timings?:VoiceTimings; id:string;assistant_text:string;tool_calls:{name:string;arguments:Record<string,unknown>}[];tool_results:{tool:string;success:boolean;message:string;data:unknown;duration_ms:number;service_id:string}[];transcript?:string;audio_available?:boolean;audio_base64?:string;tts_error?:string;tts_message?:string;tts_provider?:string;audio_mime?:string}
+export interface AssistantResponse {tts_fallback_reason?:string;voice_id?:string;tts_mode?:'server'|'piper'|'system';route_source?:'local'|'llm'; local_router_ms?:number; confidence?:number; timings?:VoiceTimings; id:string;assistant_text:string;tool_calls:{name:string;arguments:Record<string,unknown>}[];tool_results:{tool:string;success:boolean;message:string;data:unknown;duration_ms:number;service_id:string}[];transcript?:string;audio_available?:boolean;audio_base64?:string;tts_error?:string;tts_message?:string;tts_provider?:string;audio_mime?:string}
 export interface Interaction extends AssistantResponse {user_message:string;created_at:string}
 export const getHistory=()=>request<Interaction[]>('/core/api/v1/assistant/history');
 export const sendMessage=(message:string,device_id?:string)=>request<AssistantResponse>('/core/api/v1/assistant/message',{method:'POST',body:JSON.stringify({message,device_id:device_id||null})});
 
-export interface VoiceConfig {provider: 'whisper'|'mock'; max_seconds: number; max_bytes: number}
+export interface VoiceConfig {provider: 'whisper'|'mock'; max_seconds: number; max_bytes: number; neural_ready?:boolean; voices?:{id:string;name:string;kind:string}[]}
 export const getVoiceConfig = () => request<VoiceConfig>('/core/api/v1/assistant/voice/config');
-export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, recordingEndedAt = performance.now()): Promise<AssistantResponse> => {
+export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, recordingEndedAt = performance.now(), ttsMode:'server'|'piper'|'system'='server'): Promise<AssistantResponse> => {
   const form = new FormData();
   form.append('audio', audio, 'recording');
+  form.append('tts_mode',ttsMode);
+  const voice=localStorage.getItem('delta-voice')||'auto';
+  form.append('voice_id',['auto','piper','serena','vivian','ryan','aiden'].includes(voice)?voice:'auto');
   if (deviceId) form.append('device_id', deviceId);
   // fetch exposes no upload-complete event. XHR provides the browser upload
   // interval separately from server processing and response download.
@@ -100,3 +103,5 @@ export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, r
 export interface IoTState {source:string;desk_light:boolean;temperature:number;brightness:number;motion:boolean;updated_at:string}
 export const getIoTState=()=>request<IoTState>('/core/api/v1/iot/state');
 export const setIoTLight=(enabled:boolean)=>request<IoTState>('/core/api/v1/iot/light',{method:'POST',body:JSON.stringify({enabled})});
+
+export const synthesizeSpeech=(text:string,signal?:AbortSignal,voice_id=localStorage.getItem('delta-voice')||'auto',preview=false)=>request<{audio_base64:string;audio_mime:string;tts_provider:string}>('/core/api/v1/assistant/voice/synthesize',{method:'POST',body:JSON.stringify({text,voice_id:['auto','piper','serena','vivian','ryan','aiden'].includes(voice_id)?voice_id:'auto',preview}),signal});

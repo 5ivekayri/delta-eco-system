@@ -1,5 +1,6 @@
 DELTA — ПРОГРЕСС РАЗРАБОТКИ
-Обновлено: 2026-09-27
+Обновлено: 2026-10-17
+ТЕКУЩАЯ ИТЕРАЦИЯ: [##########] 100% — контекст исправлен, живая цепочка и все тесты пройдены.
 
 РЕАЛИЗАЦИЯ MVP: [####################] 100% — завершены 10 из 10 фаз локальной разработки.
 Процент показывает завершённые фазы разработки; приёмка на всех ОС ещё не завершена.
@@ -15,11 +16,11 @@ DELTA — ПРОГРЕСС РАЗРАБОТКИ
 [ГОТОВО]  9. Журнал событий и состояние сервисов
 [ГОТОВО]  10. Локальная приёмка, demo seed, документация и полировка
 
-СЕЙЧАС: фаза 10 завершена — реальные показатели Overview, demo seed и сценарии приёмки.
+СЕЙЧАС: проверена установка Whisper/Piper с нуля; основная установка включена на порту 8081.
 IOT: [####################] 100% — API, миграция, инструменты, интерфейс, голос и сохранение проверены.
 PIPER: [####################] 100% — модель, воспроизведение, fallback и проверки готовы.
 LOCAL INTENT: [####################] 100% — реализация, тесты, benchmark, запуск.
-ДАЛЕЕ: ручная приёмка физического аудио, Windows/Linux и установка моделей с нуля.
+ДАЛЕЕ: ручная приёмка физического аудио, Windows/Linux и Safari/Firefox.
 
 КАК ПРОВЕРИТЬ: Assistant → Голос → разрешить микрофон → произнести
 «Покажи устройства» → Остановить и отправить запись.
@@ -38,7 +39,7 @@ LOCAL INTENT: [####################] 100% — реализация, тесты, 
 Piper Irina установлен. Проверены воспроизведение, остановка и повтор без повторного действия.
 Браузер: 3.33 s до ответа со звуком, TTS 0.52 s; 0 LLM calls.
 
-Веб: http://localhost:8080
+Веб: http://localhost:8081
 Подробная история: docs/IMPLEMENTATION_CHECKLIST.md
 Голосовые настройки: docs/VOICE_PIPELINE.md
 
@@ -74,3 +75,41 @@ CLEAN BOOTSTRAP: [####################] 100% — пустые volumes, мигр�
 Assistant/Tasks и сохранение после restart проверены в отдельном проекте (23.44 s).
 Модели в чистое окружение не загружались; проверена явная ошибка STT_UNAVAILABLE.
 UI: сборка и 4 целевых Chrome-сценария прошли; desktop/mobile просмотрены.
+
+ITERATION 2026-10-17: FRESH VOICE [####################] 100%
+Whisper small и Piper Irina скачаны в пустые тома штатными provision-командами.
+Полная изолированная приёмка: 129.61 s; голосовой ответ: 5.78 s, 0 LLM calls.
+168 backend-тестов, frontend build, 3 Chrome-сценария — успешно.
+Основной проект оставлен включённым: UI http://localhost:8081, Core :8000.
+8080 занят другим проектом; добавлен DELTA_UI_PORT, локальное значение 8081.
+
+OPENROUTER FIX 2026-10-17: подтверждена перегрузка Nvidia (error 503 внутри HTTP 200).
+Исправлен разбор ошибок; добавлена одна попытка инференса при временном сбое.
+Локальные модели переключены на openrouter/free; API-ключ сохранён.
+177 backend-тестов прошли. Core пересобран; живой LLM-ответ: HTTP 200, 4.84 s;
+LLM → devices.list → ответ: HTTP 200, 20.27 s, один успешный вызов инструмента.
+Основная установка и Agent оставлены онлайн: http://localhost:8081.
+
+VOICE UX 2026-10-17: [####################] 100%
+Assistant → Голос и запись: Авто, локальная Милена, быстрый Piper Irina; примеры голосов.
+Автоотправка после паузы 1.8 s, настройка 1.2/2.5 s, ручной режим и отмена тишины.
+Мгновенная реплика/сигнал и анимация обработки; ожидание запроса не блокирует обратную связь.
+System voice: 3.86 s до ответа, серверный TTS пропущен; резерв Piper без повтора команды.
+180 backend-тестов, 6 frontend-тестов, 30 Chrome-сценариев прошли. Основной проект включён.
+
+2026-10-17 — Server neural voices (replaces browser/system voice approach)
+[##########] 100%
+DONE: Qwen3-TTS provider, named voices, overload/timeout Piper fallback.
+DONE: separate Assistant Settings page; chat no longer contains voice preferences.
+DONE: immediate feedback and end-of-speech detection retained.
+DONE: pinned model weights downloaded; 188 backend / 6 unit / 30 browser tests passed; final voice subset 16/16.
+DONE: final Linux CPU image deployed; Core/Tasks/Postgres healthy, UI :8081, Agent online.
+DONE: actual Qwen Ryan preview via API 21.76 s; Whisper/local devices/Piper 7.33 s.
+VERIFIED: real Russian Qwen WAV, 31.67 s / 3.12 s audio; Whisper transcribes full phrase.
+LIMITATION: CPU is slow; perceptual voice quality remains for user listening.
+
+2026-10-17 — Context repair complete
+[##########] 100%
+203 backend / 6 frontend unit / 30 Chrome scenarios passed; frontend build passed.
+Live create/delete-by-title and rename/priority/recall/complete checked against Tasks API.
+Core, Tasks, PostgreSQL healthy; Control Center remains on http://localhost:8081.

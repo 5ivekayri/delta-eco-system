@@ -17,6 +17,7 @@ class IntentDecision:
     call: ToolCall | None = None
     confidence: float = 0.0
     slots: dict = field(default_factory=dict)
+    clarification: str | None = None
 
 
 class IntentRouter(Protocol):
@@ -79,10 +80,10 @@ class LocalIntentRouter:
                  r'(?:покажи|показать) устройство|'
                  r'список (?:устройств|компьютеров)|какие (?:устройства|компьютеры) (?:сейчас )?подключены)'):
             return decision('devices.list')
-        m = match(r'(?:добавь|создай|добавить|создать) (?:новую )?задачу\s+(.+)')
+        m = match(r'(?:добавь|создай|добавить|создать) (?:новую |новое )?(?:задачу|задание)\s+(.+)')
         if m:
             title = m[1].strip(' «»"')
-            if not title or re.search(r'\b(?:до|завтра|сегодня|приоритет|приоритетом|срок|пространств\w*|по)\b|\b(?:для|в) проект[ае]\b', title, re.I):
+            if not title or re.search(r'\b(?:это|эту|такую|такое|аналогичную|предыдущую|её|ее|до|завтра|сегодня|приоритет|приоритетом|срок|пространств\w*|по)\b|\b(?:для|в) проект[ае]\b', title, re.I):
                 return IntentDecision()
             return decision('tasks.create', {'title': title}, {'task_title': title})
         m = match(r'(?:покажи|перечисли|показать) (?:(все|новые|выполненные) )?задачи|список задач')

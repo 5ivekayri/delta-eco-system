@@ -186,3 +186,72 @@ Polling intervals and cross-service activity limitations: [Activity and Services
 - Isolated containers/network cleaned up; diagnostic volumes retained. Running
   user project preserved. This closes the empty-database bootstrap check, not
   physical audio, cross-platform or model-provisioning acceptance.
+
+## Fresh voice provisioning — 2026-10-17
+
+- Extended isolated acceptance with optional --voice-audio. Downloads Whisper
+  small and Piper Irina through the standard provision commands into empty
+  model volumes, restarts Core, validates exactly one local devices.list tool,
+  zero LLM completions and nonempty Piper PCM WAV. Saves stage timings.
+- Actual run delta-acceptance-f25cfede passed in 129.61 s, including fresh model
+  downloads. Voice: STT 4949 ms, local router 9.65 ms, tool 4.5 ms, Piper 759 ms,
+  server total 5776 ms. Synthetic Russian input; physical audio remains manual.
+- 168 backend tests, frontend production build and 3 Overview Chrome checks passed.
+- Added configurable DELTA_UI_PORT (default 8080). Local installation uses 8081
+  because another user project owns 8080; that project was left untouched.
+  Voice task smoke supports --url for installations using another port.
+- Started Docker and primary Delta services; isolated containers stopped after
+  verification, primary UI/Core/Tasks/PostgreSQL left running.
+
+## OpenRouter overload handling — 2026-10-17
+
+- Reproduced HTTP 200 containing error.code=503 / provider_overloaded from the
+  configured Nvidia Ultra free endpoint. This was previously misreported as an
+  invalid tool call. Local configuration moved to openrouter/free after a live
+  successful completion with tools advertised.
+- Parse provider errors before choices; sanitized Russian explanations for auth,
+  billing, rate limits, unavailable models, overload, transport and bad outputs.
+  One inference-only retry for explicit 500/502/503/504; no retry for 429/auth or
+  malformed output. Reject truncated tool responses before executing actions.
+- All 177 backend tests passed, including 9 new overload/error/truncation checks.
+- Rebuilt/restarted Core and verified live gateway calls: conversational LLM
+  response HTTP 200 in 4.84 s; LLM-routed devices.list plus final response HTTP
+  200 in 20.27 s with one successful tool result. Agent reconnected automatically.
+  UI/Core/Tasks remain running on the configured ports.
+
+## Local voice choice and responsive recording — 2026-10-17
+
+- Added installed Russian system voice selection, preview, persistent preferences,
+  Piper fast mode and on-demand synthesis-only fallback. System mode skips server
+  synthesis; failed/delayed browser speech cannot rerun assistant tools.
+- Added local endpoint detection (250 ms signal then configurable silence),
+  silent-input cancellation, retained manual/max-duration controls and resource cleanup.
+- Immediate truthful feedback: local acknowledgment/chime, responsive waveform,
+  animated Delta orb, visible elapsed wait and long-wait copy; reduced-motion support.
+- 180 backend tests, 6 frontend unit tests and all 30 Chrome scenarios passed.
+  First cold fake microphone launch exceeded the original 5s test timeout; allowed
+  15s for permission/device startup and verified the complete suite again.
+- Real system-mode voice HTTP request completed in 3.86s, one devices.list, zero
+  server TTS; separate fallback returned valid 22050 Hz Piper WAV. Actual macOS
+  Milena engine emitted speech start without error. Desktop/mobile screens inspected.
+- No cloud speech provider added. Voice quality depends on installed OS packages;
+  acoustic endpointing and physical microphone/speaker quality still need user feedback.
+
+### Correction: Linux neural voices (2026-10-17)
+- [x] Replace browser/system voice selection with server-local Qwen3-TTS CustomVoice.
+- [x] Separate Assistant Settings page; no voice preferences inside the chat.
+- [x] Fixed Russian language, allowlisted speaker IDs, startup-only model load.
+- [x] Piper fallback on busy/timeout/failure; previews never silently substitute voices.
+- [x] Linux CPU dependency lock and NVIDIA CUDA deployment override.
+- [x] 188 backend regression tests, including load-once, preview budget, fallback and single action execution.
+- [x] Real Qwen Serena/Ryan WAVs; latency in docs/NEURAL_VOICE.md; final Core healthy with neural_ready=true, Agent online.
+- [x] 6 frontend unit / 30 Chrome tests; final voice-only rerun 16/16; live settings page checked against real API.
+- [ ] NVIDIA runtime verification on target GPU (no NVIDIA device on this Mac).
+
+### Conversation context repair (2026-10-17)
+- [x] Reproduced loss of task ID between create and delete in real conversation.
+- [x] Bounded durable user/assistant/tool history shared by text and voice.
+- [x] Context router: exact unique titles, pronouns, displayed-list ordinals.
+- [x] Fresh Tasks API validation, ambiguity clarification, no duplicated mutations.
+- [x] Lookup tools do not terminate a requested mutation; no fabricated action success.
+- [x] Live create/delete + rename/priority/recall/complete verified against Tasks state.
