@@ -14,6 +14,7 @@ def test_platform_detection(name, expected):
 
 def test_allowlist_urls_and_paths(tmp_path):
     adapter = Mock()
+    adapter.capabilities = ["system_info", "open_url", "open_path", "open_app"]
     executor = CommandExecutor(adapter, [str(tmp_path)])
     def execute(action, payload):
         return executor.execute({'type':'command','command_id':'test','action':action,'payload':payload})

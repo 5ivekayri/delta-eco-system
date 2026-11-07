@@ -39,3 +39,24 @@ async def test_truncated_tool_call_is_never_returned_or_retried():
         with pytest.raises(DeltaError,match='лимит ответа'):
             await OpenRouterLLMProvider('key','model',client).respond([],[],{})
     assert len(requests)==1
+
+
+async def test_wall_clock_deadline_covers_retry_and_cancels_upstream():
+    import asyncio
+    from time import perf_counter
+    requests=[]
+    cancelled=asyncio.Event()
+    async def handler(request):
+        requests.append(request)
+        if len(requests)==1:
+            return httpx.Response(503,json={'error':{'code':503}})
+        try:
+            await asyncio.sleep(10)
+        finally:
+            cancelled.set()
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        start=perf_counter()
+        with pytest.raises(DeltaError,match='время ожидания'):
+            await OpenRouterLLMProvider('key','model',client,timeout_seconds=.45).respond([],[],{})
+        assert perf_counter()-start < 1
+    assert len(requests)==2 and cancelled.is_set()

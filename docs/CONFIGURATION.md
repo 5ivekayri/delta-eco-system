@@ -43,3 +43,16 @@ Compose сам задаёт `DATABASE_URL` отдельно каждому backe
 `docker compose up --build -d`. После provision модели достаточно restart Core.
 Выбор голоса/автоотправки хранится в браузере на странице «Настройки ассистента»;
 он не меняет серверную конфигурацию и не устанавливает модели.
+
+## Latency controls (2026-11-07)
+
+| Variable | Default | Meaning |
+|---|---:|---|
+| `DELTA_ROUTER_TIMEOUT_SECONDS` | 20 | Wall-clock deadline for one routing completion, including retry |
+| `DELTA_ASSISTANT_TIMEOUT_SECONDS` | 30 | Wall-clock deadline for one assistant completion, including retry |
+| `DELTA_LLM_BUDGET_SECONDS` | 45 | Cumulative waiting budget across model calls per request |
+| `WHISPER_CPU_THREADS` | 2 | CPU inference threads; tune by measurements, range 1–32 |
+
+Native startup reads `.env`; Compose passes these settings explicitly. Restart
+Core after changes. On this Nobara machine `WHISPER_CPU_THREADS=4` was measured and
+selected; the model remains small/int8. See [VOICE_LATENCY.md](VOICE_LATENCY.md).

@@ -1,9 +1,10 @@
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from delta_contracts.devices import CommandRequest
 from delta_contracts.errors import DeltaError
 from delta_contracts.storage import serialize
-from delta_contracts.workspaces import LaunchInput
+from delta_contracts.workspaces import LaunchInput, WorkspaceCreateTool
 from delta_core.devices.models import Device
 from delta_core.activity.models import record_event
 from .models import Workspace, WorkspaceDeviceBinding
@@ -20,6 +21,32 @@ class WorkspaceService:
     def __init__(self,engine,devices):
         self.engine=engine
         self.devices=devices
+
+    async def create(self, arguments: WorkspaceCreateTool):
+        with Session(self.engine) as session:
+            if session.scalar(select(Workspace).where(func.lower(Workspace.name) == arguments.name.lower())):
+                raise DeltaError('WORKSPACE_EXISTS', 'Рабочее пространство с таким названием уже существует.', 409)
+            if arguments.binding and session.get(Device, str(arguments.binding.device_id)) is None:
+                raise DeltaError('DEVICE_NOT_FOUND', 'Устройство не найдено.', 404)
+            workspace = Workspace(name=arguments.name, description=arguments.description)
+            try:
+                session.add(workspace)
+                session.flush()
+                bindings = []
+                if arguments.binding:
+                    binding = WorkspaceDeviceBinding(
+                        workspace_id=workspace.id, **arguments.binding.model_dump(mode='json'))
+                    session.add(binding)
+                    session.flush()
+                    bindings.append(serialize(binding))
+                data = {**serialize(workspace), 'bindings': bindings}
+                record_event(session, 'WORKSPACE_CREATED', f'Создано пространство: {workspace.name}',
+                             workspace_id=workspace.id, details=data)
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                raise DeltaError('WORKSPACE_EXISTS', 'Рабочее пространство с таким названием уже существует.', 409)
+            return data
 
     async def launch(self, arguments: LaunchInput):
         with Session(self.engine) as session:

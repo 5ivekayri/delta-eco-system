@@ -53,3 +53,10 @@ class LaunchInput(StrictModel):
     workspace_name: str | None = None
     device_id: UUID | None = None
     device_name: str | None = None
+
+
+class WorkspaceCreateTool(WorkspaceCreate):
+    binding: BindingInput | None = Field(
+        default=None,
+        description='Optional device setup. Use only a known device UUID and user-provided paths/URLs. Omit when only creating a workspace.',
+    )

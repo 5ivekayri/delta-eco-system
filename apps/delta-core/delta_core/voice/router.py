@@ -1,5 +1,7 @@
 import base64
 import asyncio
+import json
+import logging
 from uuid import UUID
 from typing import Literal
 from pydantic import BaseModel, Field, ConfigDict
@@ -98,6 +100,8 @@ async def voice(request: Request, background_tasks: BackgroundTasks, audio: Uplo
         if transcript and len(transcript) <= 10000:
             body['transcript'] = transcript
         return JSONResponse(body, status_code=error.status, background=background_tasks)
+    finally:
+        logging.getLogger(__name__).info(json.dumps({'event':'voice_timing', 'request_id':getattr(request.state,'request_id',None), **timings.snapshot()}))
 
 
 class SynthesisInput(BaseModel):

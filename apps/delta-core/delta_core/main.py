@@ -53,6 +53,13 @@ async def lifespan(app: FastAPI):
 def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Delta Core", version="0.1.0", lifespan=lifespan)
     configure_app(app, settings or Settings())
+    import os
+    if os.environ.get('DELTA_ACCOUNTS_ENABLED') == 'true':
+        from delta_core.accounts.router import router as accounts_router, authorize
+        app.state.account_authorizer = authorize
+        app.include_router(accounts_router)
+    from delta_core.assistant.router import message as desktop_message
+    app.add_api_route('/api/v1/desktop/message', desktop_message, methods=['POST'])
     app.state.devices = DeviceManager(app.state.engine, app.state.settings)
     app.include_router(devices_router)
     app.include_router(activity_router)
@@ -61,6 +68,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.services = ServiceRegistry(configs if configs is not None else [
         {'service_id':'delta-tasks', 'base_url':app.state.settings.tasks_url}
     ], app.state.http, app.state.engine)
+    from delta_core.accounts.tasks_proxy import router as tasks_proxy
+    app.include_router(tasks_proxy)
     app.include_router(services_router)
     app.state.workspaces=WorkspaceService(app.state.engine,app.state.devices)
     app.include_router(workspaces_router)
@@ -78,15 +87,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         provider = router_provider = MockLLMProvider()
     else:
         provider = OpenRouterLLMProvider(settings.openrouter_api_key,
-            settings.delta_assistant_model or settings.openrouter_model, app.state.llm_http)
+            settings.delta_assistant_model or settings.openrouter_model, app.state.llm_http,
+            timeout_seconds=settings.delta_assistant_timeout_seconds)
         router_provider = OpenRouterLLMProvider(settings.openrouter_api_key,
             settings.delta_router_model or settings.openrouter_model, app.state.llm_http,
-            router=True, max_tokens=settings.delta_router_max_tokens)
+            router=True, max_tokens=settings.delta_router_max_tokens,
+            timeout_seconds=settings.delta_router_timeout_seconds)
     from delta_core.assistant.context_intents import ConversationIntentRouter
+    from delta_core.assistant.application_intents import ApplicationIntentRouter
     task_lookup = RegistryTaskLookup(app.state.tools)
     app.state.assistant = AssistantService(app.state.engine, app.state.tools, provider, router_provider,
-        local_router=ConversationIntentRouter(LocalIntentRouter(task_lookup), task_lookup),
-        local_threshold=settings.delta_local_intent_threshold)
+        local_router=ApplicationIntentRouter(ConversationIntentRouter(LocalIntentRouter(task_lookup), task_lookup)),
+        local_threshold=settings.delta_local_intent_threshold, llm_budget_seconds=settings.delta_llm_budget_seconds)
     if settings.tts_provider not in {'piper', 'qwen', 'mock', 'disabled'}:
         raise ValueError('TTS_PROVIDER must be piper, qwen, mock or disabled')
     app.state.tts = (PiperTTSProvider(settings.piper_model, settings.tts_max_chars, settings.tts_max_seconds)
@@ -100,7 +112,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         raise ValueError('STT_PROVIDER must be mock or whisper')
     app.state.stt = (MockSTTProvider(settings.mock_stt_transcript) if settings.stt_provider == 'mock'
                      else WhisperSTTProvider(settings.whisper_model, settings.whisper_cache_dir,
-                                             settings.voice_max_seconds, settings.whisper_language))
+                                             settings.voice_max_seconds, settings.whisper_language, settings.whisper_cpu_threads))
     app.include_router(voice_router)
     app.add_middleware(VoiceUploadLimit, max_bytes=settings.voice_max_bytes + 64 * 1024)
     return app

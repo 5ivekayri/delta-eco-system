@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from delta_contracts.errors import DeltaError
 from delta_contracts.storage import serialize
-from delta_contracts.workspaces import WorkspaceCreate,WorkspaceUpdate,BindingInput,LaunchInput
+from delta_contracts.workspaces import WorkspaceCreate,WorkspaceUpdate,BindingInput,LaunchInput,WorkspaceCreateTool
 from delta_core.devices.models import Device
 from .models import Workspace,WorkspaceDeviceBinding
 from .service import get_workspace
@@ -39,12 +39,8 @@ def list_workspaces(request:Request):
 
 
 @router.post('',status_code=201)
-def create_workspace(body:WorkspaceCreate,request:Request):
-    with Session(request.app.state.engine) as session:
-        unique_name(session,body.name)
-        workspace=Workspace(**body.model_dump())
-        session.add(workspace);commit(session);session.refresh(workspace)
-        return serialize(workspace)
+async def create_workspace(body:WorkspaceCreate,request:Request):
+    return await request.app.state.workspaces.create(WorkspaceCreateTool(**body.model_dump()))
 
 
 @router.get('/{workspace_id}')

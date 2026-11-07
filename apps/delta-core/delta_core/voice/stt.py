@@ -31,11 +31,12 @@ class MockSTTProvider(STTProvider):
 class WhisperSTTProvider(STTProvider):
     name = 'whisper'
 
-    def __init__(self, model: str, cache_dir: str, max_seconds: int, language: str | None = "ru"):
+    def __init__(self, model: str, cache_dir: str, max_seconds: int, language: str | None = "ru", cpu_threads: int = 2):
         self.model_name = model
         self.cache_dir = cache_dir
         self.max_seconds = max_seconds
         self.language = language
+        self.cpu_threads = cpu_threads
         self._model = None
         self._lock = Lock()
         self._startup_attempted = False
@@ -56,7 +57,7 @@ class WhisperSTTProvider(STTProvider):
                 supported = ctranslate2.get_supported_compute_types('cpu')
                 self.compute_type = 'int8' if 'int8' in supported else 'float32'
                 self._model = WhisperModel(self.model_name, device='cpu', compute_type=self.compute_type,
-                                           cpu_threads=2, download_root=self.cache_dir, local_files_only=True)
+                                           cpu_threads=self.cpu_threads, download_root=self.cache_dir, local_files_only=True)
             except Exception:
                 self.startup_error = 'Модель Whisper не готова. Установите модель и перезапустите Core; текстовый чат доступен.'
 

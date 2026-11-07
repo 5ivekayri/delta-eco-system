@@ -14,3 +14,6 @@ playwright-report/
 *.db
 backups/
 docker/compose.local.yml
+
+# macOS metadata sidecars
+._*

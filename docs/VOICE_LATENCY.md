@@ -153,3 +153,73 @@ docker compose restart delta-core
 
 References: [faster-whisper](https://github.com/SYSTRAN/faster-whisper),
 [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection).
+
+## Nobara live measurement and latency fixes — 2026-11-07
+
+Raw results: [latency-2026-11-07.json](../benchmarks/latency-2026-11-07.json).
+Three sequential requests per case, through the local Vite gateway. CPU Ryzen 5
+4600H; Whisper small/int8, Piper Irina, existing OpenRouter model
+`nvidia/nemotron-3.5-lightning:free`. Voice input was synthetic Piper audio,
+not the user's microphone. Conversation history was not reset between samples.
+These small samples are not tail-latency guarantees.
+
+| Request | Before median, ms | After median, ms |
+|---|---:|---:|
+| Text: list devices | 36.53 | 52.95 |
+| Text: list tasks | 28.01 | 26.75 |
+| Text: list services | 3061.25 | 22.95 |
+| Short general conversation | 2785.81 | 2730.33 |
+| Voice: list devices, including Piper response | 2845.87 | 1845.05 |
+
+All 30 measured requests returned HTTP 200. Small local-command timing variation
+is retained in the table rather than presented as a speedup. List-services requests
+previously made two model calls while the actual tool took about 0.1 ms. Exact,
+unqualified service/workspace list requests now use registry-validated local
+routing and factual formatting; qualified/compound requests still use the LLM.
+
+Whisper used a hardcoded two CPU threads. A separate identical-audio probe measured
+median transcription times of 2521.57 / 1671.97 / 1586.54 ms at 2 / 4 / 6 threads.
+Four threads were selected locally to leave capacity for the other services.
+The live voice comparison reduced median STT from 2548.04 to 1594.68 ms, keeping
+the same model and recognized command. The separate probe's older audio fixture
+was misrecognized identically at each thread count; this is not a broad accuracy
+validation. Default thread count remains two for other machines.
+
+External-model latency still varies (after-change conversation: 1.96–4.83 s).
+Old local logs contained a text response up to 18.43 s, but had no stage timings
+for that historical request, so its exact cause cannot be assigned retrospectively.
+No live minute-long timeout was reproduced in this batch. Previously, the 60 s
+httpx inactivity timeout reset on chunks, each retry got its own timeout, and up
+to four model turns could accumulate. New configurable wall-clock deadlines are
+20 s per router completion, 30 s per assistant completion (including retry), and
+45 s cumulatively across LLM calls in one assistant request. These bound LLM
+waiting, not STT/tool/database execution. They return an honest timeout or preserve
+already-completed tool results; they do not fabricate a successful model answer.
+Cancellation and no replay after a completed action are covered by delayed-provider
+tests, including an overload followed by a hanging retry.
+
+Text and voice responses/errors now expose stage timing; text client timing is
+also shown in Developer mode. `context_ms` measures history/environment DB reads,
+`persistence_ms` measures durable interaction writes. Core logs emit
+`assistant_timing` / `voice_timing` with the HTTP `X-Request-ID`, and `llm_timing`
+with role, duration and outcome. New timing logs contain no prompts, audio or secrets.
+Historical chat entries still do not persist timing snapshots.
+
+Reproduce read-only probes (requests are recorded in chat history):
+
+```sh
+.venv/bin/python scripts/benchmark_latency.py --runs 3 \
+  --session-file /path/to/private-web-session-token \
+  --output .runtime/latency.json
+# Optional: --audio path/to/harmless-command.wav
+```
+
+With accounts disabled, omit `--session-file` to use `.env` DELTA_TOKEN.
+The session file must contain an existing web session, not an Agent session.
+Do not commit it. The probe never prints credentials or response text.
+
+Validation after the changes: 224 backend tests, 6 frontend tests, TypeScript/Vite
+build and Python sdist/wheel build passed. Restarted the native services and
+verified Core/Tasks health, a locally routed request via the authenticated desktop
+API, and matching X-Request-ID in the stage log. Existing unrelated worktree
+changes were preserved.

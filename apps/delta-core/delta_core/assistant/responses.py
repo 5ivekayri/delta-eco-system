@@ -27,6 +27,16 @@ def deterministic_response(result: dict) -> str | None:
     if not result.get('success'):
         return None
     tool, data = result.get('tool'), result.get('data')
+    if tool == 'devices.open_app' and isinstance(data, dict) and data.get('success') is True and data.get('app_name') and data.get('device_name'):
+        return data['message']
+    if tool == 'services.list' and isinstance(data, list) and all(
+        isinstance(item, dict) and isinstance(item.get('name'), str) and isinstance(item.get('status'), str) for item in data
+    ):
+        return '\n'.join('• ' + item['name'] + ' — ' + item['status'] for item in data) or 'Сервисы не найдены.'
+    if tool == 'workspaces.list' and isinstance(data, list) and all(
+        isinstance(item, dict) and isinstance(item.get('name'), str) for item in data
+    ):
+        return '\n'.join('• ' + item['name'] for item in data) or 'Рабочие пространства не найдены.'
     if tool in {'tasks.create', 'tasks.complete'} and isinstance(data, dict) and isinstance(data.get('title'), str):
         if tool == 'tasks.create':
             return 'Задача добавлена: ' + data['title']
@@ -36,6 +46,10 @@ def deterministic_response(result: dict) -> str | None:
         return 'Задача удалена.'
     if tool == 'tasks.update' and isinstance(data, dict) and isinstance(data.get('title'), str):
         return 'Задача обновлена: ' + data['title'] + (' · приоритет: ' + {'high':'высокий','medium':'средний','low':'низкий'}.get(data.get('priority'), str(data.get('priority'))) if data.get('priority') else '')
+    if tool == 'workspaces.create' and isinstance(data, dict) and data.get('id') and isinstance(data.get('name'), str):
+        return 'Рабочее пространство создано: ' + data['name'] + (
+            '. Настройки устройства сохранены.' if data.get('bindings') else
+            '. Для запуска добавьте привязку к устройству в разделе Workspaces.')
     if tool == 'devices.list' and isinstance(data, list) and all(
         isinstance(d, dict) and isinstance(d.get('display_name'), str) and d.get('status') in {'online', 'offline'} for d in data
     ):
@@ -66,6 +80,9 @@ def deterministic_response(result: dict) -> str | None:
 
 def requested_action(message: str) -> str | None:
     text = message.strip().casefold()
+    text = re.sub(r'^(?:пожалуйста|please)[, ]+', '', text)
+    if re.match(r'^(?:создай|создать|добавь|добавить|create|add)\s+(?:(?:новое|новый|a|new)\s+)*(?:рабочее пространство|пространство|воркспейс|workspace)\b', text):
+        return 'workspaces.create'
     required = None
     for pattern, name in [
         (r'^(?:добавь|создай|добавить|создать)\b', 'tasks.create'),
@@ -83,6 +100,8 @@ def requested_action(message: str) -> str | None:
 
 def action_is_fulfilled(message: str, results: list[dict]) -> bool:
     required = requested_action(message)
+    if required == 'workspaces.launch' and not re.search(r'\b(пространство|workspace)\b', message, re.I):
+        return any(r.get('tool') in {'workspaces.launch','devices.open_app'} for r in results)
     return required is None or any(r.get('tool') == required for r in results)
 
 

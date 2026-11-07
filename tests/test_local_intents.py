@@ -197,3 +197,9 @@ def test_voice_http_local_telemetry_without_openrouter(app):
         assert timings['route_source'] == 'local' and timings['confidence'] >= .9
         assert timings['router_calls'] == timings['response_generation_calls'] == 0
         assert timings['local_router_ms'] >= 0
+
+
+@pytest.mark.parametrize('phrase', ['Покажи сервисы кроме Tasks', 'Покажи сервисы и объясни их состояние', 'Покажи пространства на другом компьютере'])
+async def test_list_optimization_does_not_drop_qualifiers(phrase):
+    specs=[{'name':name,'input_schema':EmptyPayload.model_json_schema()} for name in ['services.list','workspaces.list']]
+    assert (await LocalIntentRouter().route(phrase,specs,{})).call is None

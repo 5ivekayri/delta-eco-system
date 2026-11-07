@@ -15,6 +15,7 @@ from .models import Device
 router = APIRouter()
 
 
+@router.get("/api/v1/desktop/devices")
 @router.get("/api/v1/devices")
 def devices(request: Request):
     with Session(request.app.state.engine) as session:
@@ -43,7 +44,15 @@ async def command(device_id: str, body: CommandRequest, request: Request):
 @router.websocket("/ws/agents")
 async def agent_socket(socket: WebSocket):
     settings = socket.app.state.settings
-    if not hmac.compare_digest(socket.headers.get("authorization", ""), f"Bearer {settings.delta_token}"):
+    token = socket.headers.get('authorization', '').removeprefix('Bearer ')
+    accounts = getattr(socket.app.state, 'account_authorizer', None)
+    def allowed():
+        if accounts:
+            from delta_core.accounts.service import resolve
+            user = resolve(socket.app.state.engine, token, 'agent')
+            return user and user['role'] == 'admin'
+        return hmac.compare_digest(token, settings.delta_token)
+    if not allowed():
         await socket.close(code=1008)
         return
     await socket.accept()
@@ -57,6 +66,9 @@ async def agent_socket(socket: WebSocket):
                                 "heartbeat_interval": max(1, settings.heartbeat_timeout // 3)})
         while True:
             message = await socket.receive_json()
+            if not allowed():
+                await socket.close(code=1008)
+                break
             if not isinstance(message, dict):
                 raise ValueError("Expected a JSON object")
             if message.get("type") == "heartbeat":

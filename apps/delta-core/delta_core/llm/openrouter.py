@@ -1,5 +1,7 @@
 import asyncio
 import json
+import logging
+from time import perf_counter
 import httpx
 from delta_contracts.errors import DeltaError
 from delta_contracts.tools import ToolCall
@@ -7,11 +9,29 @@ from .base import LLMProvider,LLMTurn
 
 
 class OpenRouterLLMProvider(LLMProvider):
-    def __init__(self,api_key:str,model:str,client:httpx.AsyncClient|None=None, *, router=False, max_tokens=1200):
+    def __init__(self,api_key:str,model:str,client:httpx.AsyncClient|None=None, *, router=False, max_tokens=1200, timeout_seconds=None):
         self.api_key=api_key;self.model=model;self.client=client
         self.router=router;self.max_tokens=max_tokens
+        self.timeout_seconds = timeout_seconds if timeout_seconds is not None else (20 if router else 30)
 
     async def respond(self,messages,tools,context):
+        start = perf_counter()
+        outcome = 'error'
+        try:
+            # One wall-clock deadline covers connect, body reads AND the retry.
+            # httpx's read timeout alone resets whenever another chunk arrives.
+            async with asyncio.timeout(self.timeout_seconds):
+                result = await self._respond(messages,tools,context)
+                outcome = 'ok'
+                return result
+        except TimeoutError:
+            outcome = 'timeout'
+            raise DeltaError('LLM_UNAVAILABLE','Превышено время ожидания модели. Попробуйте позже или выберите другую модель.',503) from None
+        finally:
+            logging.getLogger(__name__).info(json.dumps({'event':'llm_timing', 'role':'router' if self.router else 'assistant',
+                'duration_ms':round((perf_counter()-start)*1000,2),'outcome':outcome}))
+
+    async def _respond(self,messages,tools,context):
         if not self.api_key or not self.model:
             raise DeltaError('LLM_UNAVAILABLE','Configure OPENROUTER_API_KEY and the router/assistant model',503)
         aliases={t['name'].replace('.','__'):t['name'] for t in tools}
@@ -21,7 +41,7 @@ class OpenRouterLLMProvider(LLMProvider):
             if item.get('tool_calls'):
                 item['tool_calls']=[{**call,'function':{**call['function'],'name':call['function']['name'].replace('.','__')}} for call in item['tool_calls']]
             wire.append(item)
-        payload={'model':self.model,'messages':wire,'max_tokens':self.max_tokens}
+        payload={'model':self.model,'messages':wire,'max_tokens':self.max_tokens,'temperature':0.2}
         if self.router:
             payload.update(temperature=0, reasoning={'enabled':False}, provider={'sort':'latency'})
         if tools:

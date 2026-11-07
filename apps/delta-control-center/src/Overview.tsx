@@ -6,7 +6,7 @@ type Metric={label:string;value:string|null;error:boolean};
 const initial:Metric[]=['Устройства онлайн / всего','Сервисы онлайн / всего','Рабочие пространства','Открытые задачи'].map(label=>({label,value:null,error:false}));
 export function Overview({online}:{online:boolean}) {
   const [metrics,setMetrics]=useState(initial);
-  const connected=Boolean(sessionStorage.getItem('delta-token'));
+  const connected=true; // Mounted only after AccountGate authorizes an administrator.
   useEffect(()=>{
     if(!connected)return;
     let live=true,busy=false;

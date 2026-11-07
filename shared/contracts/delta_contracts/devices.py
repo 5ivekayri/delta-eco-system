@@ -10,6 +10,12 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class Application(StrictModel):
+    id: str = Field(min_length=1, max_length=128, pattern=r'^[A-Za-z0-9_.-]+$')
+    name: str = Field(min_length=1, max_length=255)
+    aliases: list[str] = Field(default_factory=list, max_length=20)
+
+
 class Registration(StrictModel):
     type: Literal["register"] = "register"
     device_uid: str = Field(min_length=1, max_length=128)
@@ -20,6 +26,8 @@ class Registration(StrictModel):
     username: str = Field(max_length=255)
     agent_version: str = Field(max_length=32)
     capabilities: list[Action] = Field(max_length=4)
+    approval_timeout: int = Field(default=0, ge=0, le=60)
+    applications: list[Application] | None = Field(default=None, max_length=1024)
 
 
 class CommandRequest(StrictModel):
@@ -30,6 +38,7 @@ class CommandRequest(StrictModel):
 class CommandMessage(CommandRequest):
     type: Literal["command"] = "command"
     command_id: str
+    expires_at: float | None = Field(default=None, gt=0, allow_inf_nan=False)
 
 
 class CommandResult(StrictModel):
@@ -64,7 +73,16 @@ class PathPayload(StrictModel):
 
 
 class AppPayload(StrictModel):
-    app_id: Literal["vscode", "browser"]
+    app_id: str = Field(min_length=1, max_length=128, pattern=r'^[A-Za-z0-9_.-]+$')
+
+
+class ApplicationTarget(StrictModel):
+    device_id: str | None = Field(default=None, max_length=128)
+    device_name: str | None = Field(default=None, max_length=255)
+
+
+class OpenApplication(ApplicationTarget):
+    app_name: str = Field(min_length=1, max_length=255)
 
 
 PAYLOAD_SCHEMAS = {
