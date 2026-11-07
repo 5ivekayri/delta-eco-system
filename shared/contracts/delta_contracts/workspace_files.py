@@ -96,7 +96,9 @@ class FileStore:
                 return pack(body.path,data)
             data=base64.b64decode(body.content_base64,validate=True)
             validate_content(body.path,data)
-            previous=target.read_bytes() if target.is_file() and target.stat().st_size<=MAX_FILE else None
+            if target.exists() and (not target.is_file() or target.stat().st_size>MAX_FILE):
+                raise ValueError('Existing file cannot be replaced: unsupported type or size')
+            previous=target.read_bytes() if target.is_file() else None
             if (digest(previous) if previous is not None else '')!=body.expected_hash:raise FileConflict('File changed; reload before saving')
             rows=self.listing(directory)
             if len(rows)>=128 and previous is None:raise ValueError('Maximum 128 files')
