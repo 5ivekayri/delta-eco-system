@@ -182,3 +182,5 @@ Assistant использует предыдущие сообщения и рез
 [Управление приложениями и описание экрана](docs/DESKTOP_ACTIONS.md)
 
 [OpenRouter/local LLM bridge](tools/llm-bridge/README.md).
+
+[Документы, версии и ИИ](docs/DOCUMENTS.md)

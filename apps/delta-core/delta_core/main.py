@@ -60,6 +60,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.include_router(accounts_router)
     from delta_core.assistant.router import message as desktop_message
     app.add_api_route('/api/v1/desktop/message', desktop_message, methods=['POST'])
+    from delta_core.documents.service import DocumentService
+    from delta_core.documents.router import router as documents_router
+    app.state.documents = DocumentService(app.state.engine)
+    app.include_router(documents_router)
+    from delta_core.documents.limits import DocumentBodyLimit
+    app.add_middleware(DocumentBodyLimit)
     app.state.devices = DeviceManager(app.state.engine, app.state.settings)
     app.include_router(devices_router)
     app.include_router(activity_router)

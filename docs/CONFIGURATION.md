@@ -56,3 +56,5 @@ Compose сам задаёт `DATABASE_URL` отдельно каждому backe
 Native startup reads `.env`; Compose passes these settings explicitly. Restart
 Core after changes. On this Nobara machine `WHISPER_CPU_THREADS=4` was measured and
 selected; the model remains small/int8. See [VOICE_LATENCY.md](VOICE_LATENCY.md).
+
+DOCX: [Документы, версии и ИИ](DOCUMENTS.md).

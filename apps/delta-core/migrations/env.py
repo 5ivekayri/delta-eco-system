@@ -2,6 +2,7 @@ from alembic import context
 from sqlalchemy import create_engine
 from delta_contracts.config import Settings
 from delta_core.db import Base
+from delta_core.documents.models import DocumentRecord, DocumentVersion
 from delta_core.accounts.models import User, LoginSession
 from delta_core.devices.models import Device
 from delta_core.activity.models import ActivityEvent

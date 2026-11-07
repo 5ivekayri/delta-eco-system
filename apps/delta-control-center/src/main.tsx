@@ -12,16 +12,19 @@ import {Assistant} from './Assistant';
 import {SpeechSettings} from './SpeechSettings';
 import {ActivityFeed} from './ActivityFeed';
 import {Overview} from './Overview';
+import {Documents} from './Documents';
 import {VirtualIoT} from './VirtualIoT';
 
 const pages = [
   ['Overview', LayoutDashboard], ['Assistant', MessageSquare], ['Devices', Monitor],
-  ['Workspaces', Folder], ['Tasks', ListTodo], ['Services', Boxes],
+  ['Документы', Folder], ['Workspaces', Folder], ['Tasks', ListTodo], ['Services', Boxes],
   ['Activity', Activity], ['Virtual IoT', Cpu], ['Settings', Settings], ['Настройки ассистента', Settings],
 ] as const;
 
 function App() {
-  const [page, setPage] = useState('Overview');
+  const [page, updatePage] = useState('Overview');
+  const [documentDirty,setDocumentDirty] = useState(false);
+  const setPage = (next:string) => {if(next===page)return;if(documentDirty&&!confirm('Есть несохранённые правки документа. Перейти без сохранения?'))return;setDocumentDirty(false);updatePage(next);};
   const [online, setOnline] = useState(false);
   const [error, setError] = useState('');
   const [collapsed, setCollapsed] = useState(false);
@@ -41,7 +44,7 @@ function App() {
     <main><header><span>Personal / <strong>{page}</strong></span><span className="version">LOCAL ENVIRONMENT <span>v0.1</span></span></header>
       <section className="content"><div className="eyebrow">DELTA DIGITAL ECOSYSTEM</div><h1>{page === 'Overview' ? 'Your workspace. Connected.' : page}</h1><p className="subtitle">Единое пространство для ваших устройств, сервисов и идей.</p>
       {error && <div role="alert" className="error">Core недоступен: {error}</div>}
-      {page === 'Настройки ассистента' ? <SpeechSettings/> : page === 'Activity' ? <ActivityFeed/> : page === 'Virtual IoT' ? <VirtualIoT/> : page === 'Assistant' ? <Assistant/> : page === 'Workspaces' ? <Workspaces onAssistant={()=>setPage('Assistant')}/> : page === 'Tasks' ? <Tasks/> : page === 'Services' ? <Services/> : page === 'Devices' ? <Devices/> : page === 'Settings' ? <article><h2>Настройки</h2><p>Вы вошли в аккаунт администратора. Подключение защищено серверной сессией.</p><label className="debug-toggle"><input type="checkbox" defaultChecked={sessionStorage.getItem('delta-debug')==='true'} onChange={e=>sessionStorage.setItem('delta-debug',String(e.target.checked))}/> Показывать диагностику ответов</label></article> :
+      {page === 'Документы' ? <Documents onDirty={setDocumentDirty}/> : page === 'Настройки ассистента' ? <SpeechSettings/> : page === 'Activity' ? <ActivityFeed/> : page === 'Virtual IoT' ? <VirtualIoT/> : page === 'Assistant' ? <Assistant/> : page === 'Workspaces' ? <Workspaces onAssistant={()=>setPage('Assistant')}/> : page === 'Tasks' ? <Tasks/> : page === 'Services' ? <Services/> : page === 'Devices' ? <Devices/> : page === 'Settings' ? <article><h2>Настройки</h2><p>Вы вошли в аккаунт администратора. Подключение защищено серверной сессией.</p><label className="debug-toggle"><input type="checkbox" defaultChecked={sessionStorage.getItem('delta-debug')==='true'} onChange={e=>sessionStorage.setItem('delta-debug',String(e.target.checked))}/> Показывать диагностику ответов</label></article> :
        <Overview online={online}/> }
       </section><div className="bottom-note">Δ &nbsp; A personal digital ecosystem.</div></main>
   </div>;
