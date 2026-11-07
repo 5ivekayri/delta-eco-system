@@ -198,7 +198,7 @@ class StudioService:
                             candidates=outcome.data.get('matches',[])
                             answer=('Выберите файл и укажите его полный путь:\n'+'\n'.join(m['path'] for m in candidates)) if candidates else 'Совпадений в разрешённых папках не найдено. Уточните название или добавьте папку в настройках Agent.'
                             if outcome.data.get('truncated'):answer+='\nПоиск ограничен по времени/числу файлов; уточните название.'
-                            return {'answer':answer,'changed_files':list(dict.fromkeys(writes)),'results':results,'matches':candidates}
+                            return {'answer':answer,'changed_files':list(dict.fromkeys(writes)),'results':results,'matches':candidates,'search_device_id':call.arguments.get('device_id')}
         except (DeltaError,TimeoutError) as error:
             answer=(error.message if isinstance(error,DeltaError) else 'Время работы ИИ истекло.')+' Уже сохранённые изменения доступны в файлах и истории.'
         if not answer:answer='Достигнут лимит шагов. Можно продолжить следующим сообщением.'

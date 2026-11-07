@@ -106,3 +106,14 @@ def test_file_store_rejects_symlinks_and_stale_writes(tmp_path):
     (store.directory(key)/'escape').symlink_to(outside,target_is_directory=True)
     with pytest.raises(ValueError):call('write','escape/evil.txt',content_base64='aGk=')
     assert call('read','src/app.js')['hash']==first['hash']
+
+
+def test_tasks_proxy_retries_only_reads(app):
+    import httpx
+    with TestClient(app) as client:
+        app.state.http.request=AsyncMock(side_effect=[httpx.RemoteProtocolError('connection closed'),httpx.Response(200,json=[])])
+        assert client.get('/api/v1/task-proxy/tasks',headers=HEADERS).status_code==200
+        assert app.state.http.request.await_count==2
+        app.state.http.request=AsyncMock(side_effect=httpx.RemoteProtocolError('connection closed'))
+        assert client.post('/api/v1/task-proxy/tasks',headers=HEADERS,json={'title':'Do not duplicate'}).status_code==503
+        assert app.state.http.request.await_count==1
