@@ -27,7 +27,7 @@ def register_builtins(app):
         from delta_core.devices.screen import describe_screen
         return await describe_screen(app, applications, target)
     app.state.tools.register(LocalTool('devices.describe_screen',
-        'Describe the current screen on one target computer. Always requires local consent to capture and send one screenshot to OpenRouter. Use only when the user explicitly asks to inspect their screen.',
+        'Describe the current screen on one target computer. Uses the saved Agent ask/allow/deny policy to capture and send one screenshot to OpenRouter. Use only when the user explicitly asks to inspect their screen.',
         ApplicationTarget, describe_screen, ['device:screen']))
     async def devices(arguments):
         with Session(app.state.engine) as session:
