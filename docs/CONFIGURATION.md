@@ -58,3 +58,5 @@ Core after changes. On this Nobara machine `WHISPER_CPU_THREADS=4` was measured 
 selected; the model remains small/int8. See [VOICE_LATENCY.md](VOICE_LATENCY.md).
 
 DOCX: [Документы, версии и ИИ](DOCUMENTS.md).
+
+[Workspace Studio: код, документы, хранение и превью](WORKSPACE_STUDIO.md).

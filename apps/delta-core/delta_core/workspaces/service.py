@@ -28,7 +28,12 @@ class WorkspaceService:
                 raise DeltaError('WORKSPACE_EXISTS', 'Рабочее пространство с таким названием уже существует.', 409)
             if arguments.binding and session.get(Device, str(arguments.binding.device_id)) is None:
                 raise DeltaError('DEVICE_NOT_FOUND', 'Устройство не найдено.', 404)
-            workspace = Workspace(name=arguments.name, description=arguments.description)
+            if arguments.storage_mode == 'local':
+                if not arguments.storage_device_id or session.get(Device, str(arguments.storage_device_id)) is None:
+                    raise DeltaError('DEVICE_CONTEXT_REQUIRED', 'Для локального хранения выберите компьютер.', 422)
+            workspace = Workspace(name=arguments.name, description=arguments.description,
+                storage_mode=arguments.storage_mode, work_type=arguments.work_type,
+                storage_device_id=str(arguments.storage_device_id) if arguments.storage_mode=='local' else None)
             try:
                 session.add(workspace)
                 session.flush()

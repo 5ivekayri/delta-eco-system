@@ -255,3 +255,10 @@ Polling intervals and cross-service activity limitations: [Activity and Services
 - [x] Fresh Tasks API validation, ambiguity clarification, no duplicated mutations.
 - [x] Lookup tools do not terminate a requested mutation; no fabricated action success.
 - [x] Live create/delete + rename/priority/recall/complete verified against Tasks state.
+
+### Workspace Studio (2026-11-07)
+- [x] Cloud/local file storage, work types and Agent file capabilities.
+- [x] Coding assistant, HTML preview, DOCX editing and version history.
+- [x] Upload/drop, library copy, bounded computer search/import with ambiguity handling.
+- [x] Live global assistant creates workspace and actual landing file; real Agent file round trip.
+- See [verification and limits](WORKSPACE_STUDIO.md).

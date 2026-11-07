@@ -10,7 +10,7 @@ def is_simple_action(message: str) -> bool:
     text = message.strip().casefold()
     if len(text) > 600 or re.search(
         r'объясн|почему|зачем|сравн|проанализ|суммир|резюм|подведи|оцен[ик]|порекоменд|'
-        r'посовет|затем|потом|после этого|если|сводк|итог|вывод|\bи\b|'
+        r'посовет|затем|потом|после этого|если|сводк|итог|вывод|лендинг|html|программир|\bи\b|'
         r'\b(why|explain|compare|analy[sz]e|summari[sz]e|recommend|then|if|and)\b', text
     ):
         return False

@@ -99,7 +99,8 @@ class AssistantService:
                   'To create a workspace use workspaces.create. A name is required: ask if missing. '
                   'Description is optional. Only include a binding when the user requests device setup. '
                   'Use the selected current device for an explicitly requested current-computer binding; otherwise resolve a unique named device or ask. '
-                  'Never invent local paths or URLs. Creation only saves configuration, it does not create directories or launch apps. '
+                  'Never invent local paths or URLs. For coding or landing pages set work_type website/code, choose storage_mode cloud or local as requested (ask if unspecified); local storage needs storage_device_id. '
+                  'Use workspaces.build after creation to actually create the requested site or edit workspace files/documents. Managed local folders are created by Agent; no custom path is needed. '
                   'After a successful creation, reuse the returned workspace ID for any requested launch or task. ')
         if simple:
             system += 'Route this direct command to the required tool. Be brief; do not narrate the action. '
@@ -148,7 +149,7 @@ class AssistantService:
                 text = 'Достигнут лимит вызовов инструментов. ' + '\n'.join(describe_result(r) for r in results)
                 break
             for call in turn.calls:
-                if call.name in {'workspaces.launch','devices.open_app','devices.close_app','devices.minimize_app','devices.list_apps','devices.describe_screen'} and not call.arguments.get('device_id') and not call.arguments.get('device_name') and device_id:
+                if call.name in {'workspaces.launch','devices.open_app','devices.close_app','devices.minimize_app','devices.list_apps','devices.describe_screen','workspaces.build'} and not call.arguments.get('device_id') and not call.arguments.get('device_name') and device_id:
                     call.arguments['device_id'] = device_id
             batch_signatures = [json.dumps([c.name, c.arguments], sort_keys=True, default=str) for c in turn.calls]
             if len(set(batch_signatures)) != len(batch_signatures) or signatures.intersection(batch_signatures):

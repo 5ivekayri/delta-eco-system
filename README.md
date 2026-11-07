@@ -184,3 +184,5 @@ Assistant использует предыдущие сообщения и рез
 [OpenRouter/local LLM bridge](tools/llm-bridge/README.md).
 
 [Документы, версии и ИИ](docs/DOCUMENTS.md)
+
+[Workspace Studio: код, документы, хранение и превью](docs/WORKSPACE_STUDIO.md).

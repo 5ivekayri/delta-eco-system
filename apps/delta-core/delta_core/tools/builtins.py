@@ -48,6 +48,17 @@ def register_builtins(app):
     app.state.tools.register(LocalTool(
         'workspaces.create',
         'Create a workspace with name and description, optionally with a device binding (path, allowed apps, URLs). '
-        'Does not launch apps or create folders. Ask for a missing name; never invent paths, URLs or device IDs. '
+        'Choose work_type website/code/documents/general and storage_mode cloud/local. Local storage requires storage_device_id of a known computer. Cloud is on Delta Core. '
+        'Ask for a missing name; never invent paths, URLs or device IDs. '
         'Creating without a binding needs no device.',
         WorkspaceCreateTool, app.state.workspaces.create, ['workspaces:write']))
+
+    from delta_core.workspaces.studio import BuildInput,ChatInput
+    async def build(arguments):
+        return await app.state.studio.chat(arguments.workspace_id,
+            ChatInput(instruction=arguments.instruction,device_id=arguments.device_id),app.state.assistant.provider)
+    app.state.tools.register(LocalTool('workspaces.build',
+        'Build/edit a website or source files, read/edit documents, search/import computer files in an existing workspace. '
+        'Use after workspaces.create with its returned ID. instruction must reflect the user request. '
+        'Supports HTML preview and versioned files; no shell execution. device_id is the source computer for file search/import.',
+        BuildInput,build,['workspaces:write']))

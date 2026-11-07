@@ -86,3 +86,5 @@ docker compose up --build -d
 Не публикуйте вывод `docker compose config`: в нём могут быть раскрыты значения `.env`.
 
 DOCX: [Документы, версии и ИИ](DOCUMENTS.md).
+
+[Workspace Studio: код, документы, хранение и превью](WORKSPACE_STUDIO.md).

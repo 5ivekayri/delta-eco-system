@@ -29,6 +29,7 @@ services:
       DATABASE_URL: postgresql+psycopg://delta_core:${CORE_DB_PASSWORD}@postgres/delta_core
       DELTA_TOKEN: ${DELTA_TOKEN:?Set DELTA_TOKEN in .env}
       TASKS_URL: http://delta-tasks:8000
+      DELTA_WORKSPACE_DIR: /data/workspaces
       SERVICE_CONFIGS: ${SERVICE_CONFIGS:-null}
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
@@ -59,6 +60,7 @@ services:
       TTS_MAX_SECONDS: ${TTS_MAX_SECONDS:-60}
       TTS_TIMEOUT_SECONDS: ${TTS_TIMEOUT_SECONDS:-10}
     volumes:
+      - workspace-data:/data/workspaces
       - whisper-models:/models/whisper
       - piper-models:/models/piper
       - ${QWEN_MODEL_VOLUME:-qwen-models}:/models/qwen
@@ -94,6 +96,7 @@ services:
       delta-core: {condition: service_healthy}
       delta-tasks: {condition: service_healthy}
 volumes:
+  workspace-data:
   whisper-models:
   piper-models:
   qwen-models:

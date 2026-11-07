@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-Action = Literal["system_info", "open_url", "open_path", "open_app", "close_app", "minimize_app", "capture_screen"]
+Action = Literal["system_info", "open_url", "open_path", "open_app", "close_app", "minimize_app", "capture_screen", "workspace_files", "search_files", "read_file"]
 
 
 class StrictModel(BaseModel):
@@ -25,7 +25,7 @@ class Registration(StrictModel):
     architecture: str = Field(max_length=64)
     username: str = Field(max_length=255)
     agent_version: str = Field(max_length=32)
-    capabilities: list[Action] = Field(max_length=7)
+    capabilities: list[Action] = Field(max_length=10)
     approval_timeout: int = Field(default=0, ge=0, le=60)
     applications: list[Application] | None = Field(default=None, max_length=1024)
 
@@ -85,7 +85,25 @@ class OpenApplication(ApplicationTarget):
     app_name: str = Field(min_length=1, max_length=255)
 
 
+class WorkspaceFilesPayload(StrictModel):
+    workspace_id: str = Field(pattern=r'^[a-f0-9-]{36}$')
+    operation: Literal['list', 'read', 'write', 'history']
+    path: str = Field(default='', max_length=512)
+    content_base64: str = Field(default='', max_length=14000000)
+    expected_hash: str = Field(default='', max_length=64)
+    version: str = Field(default='', max_length=64)
+
+
+class SearchFilesPayload(StrictModel):
+    query: str = Field(min_length=1, max_length=255)
+
+
+class ReadFilePayload(StrictModel):
+    path: str = Field(min_length=1, max_length=4096)
+
+
 PAYLOAD_SCHEMAS = {
+    "workspace_files": WorkspaceFilesPayload, "search_files": SearchFilesPayload, "read_file": ReadFilePayload,
     "system_info": EmptyPayload, "open_url": URLPayload,
     "open_path": PathPayload, "open_app": AppPayload,
     "close_app": AppPayload, "minimize_app": AppPayload, "capture_screen": EmptyPayload,

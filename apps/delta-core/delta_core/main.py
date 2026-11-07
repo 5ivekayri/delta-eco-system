@@ -79,6 +79,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(services_router)
     app.state.workspaces=WorkspaceService(app.state.engine,app.state.devices)
     app.include_router(workspaces_router)
+    from delta_core.workspaces.studio import StudioService
+    from delta_core.workspaces.studio_router import router as studio_router
+    app.state.studio=StudioService(app.state.engine,app.state.devices)
+    app.include_router(studio_router)
     app.state.tools=ToolRegistry(app.state.services)
     register_builtins(app)
     app.state.iot = VirtualIoTAdapter(app.state.engine)

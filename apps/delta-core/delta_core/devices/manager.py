@@ -122,7 +122,7 @@ class DeviceManager:
         if connection.approval_timeout:
             message['expires_at'] = time.time() + timeout
         with Session(self.engine) as session:
-            record_event(session, "COMMAND_SENT", request.action, device_id=device_id, details=message)
+            record_event(session, "COMMAND_SENT", request.action, device_id=device_id, details=({**message, 'payload': {'operation': payload.get('operation'), 'path': payload.get('path'), 'content_redacted': True}} if request.action in {'workspace_files','read_file','search_files'} else message))
             session.commit()
         try:
             async with connection.send_lock:
@@ -136,7 +136,7 @@ class DeviceManager:
         finally:
             connection.pending.pop(command_id, None)
         with Session(self.engine) as session:
-            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=({**result, 'data': {'image_redacted': True}} if request.action == 'capture_screen' else result))
+            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=({**result, 'data': {'image_redacted': True}} if request.action in {'capture_screen','workspace_files','read_file','search_files'} else result))
             session.commit()
         return result
 

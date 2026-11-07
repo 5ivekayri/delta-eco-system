@@ -38,9 +38,9 @@ export interface Service {service_id:string;name:string;version:string|null;base
 export const getServices=()=>request<Service[]>('/core/api/v1/services');
 
 export interface Binding {id:string;workspace_id:string;device_id:string;local_path:string;apps:string[];urls:string[]}
-export interface Workspace {id:string;name:string;description:string;bindings?:Binding[]}
+export interface Workspace {id:string;name:string;description:string;bindings?:Binding[];storage_mode:'cloud'|'local';work_type:'general'|'website'|'code'|'documents';storage_device_id?:string|null}
 export const getWorkspaces=()=>request<Workspace[]>('/core/api/v1/workspaces');
-export const saveWorkspace=(body:{name:string;description:string},id?:string)=>request<Workspace>('/core/api/v1/workspaces'+(id?'/'+id:''),{method:id?'PATCH':'POST',body:JSON.stringify(body)});
+export const saveWorkspace=(body:{name:string;description:string;storage_mode?:string;work_type?:string;storage_device_id?:string|null},id?:string)=>request<Workspace>('/core/api/v1/workspaces'+(id?'/'+id:''),{method:id?'PATCH':'POST',body:JSON.stringify(body)});
 export const deleteWorkspace=(id:string)=>request<{success:boolean}>('/core/api/v1/workspaces/'+id,{method:'DELETE'});
 export const saveBinding=(id:string,body:{device_id:string;local_path:string;apps:string[];urls:string[]})=>request<Binding>(`/core/api/v1/workspaces/${id}/bindings`,{method:'POST',body:JSON.stringify(body)});
 export const launchWorkspace=(id:string,device_id:string)=>request<CommandResult&{results:CommandResult[]}>(`/core/api/v1/workspaces/${id}/launch`,{method:'POST',body:JSON.stringify({device_id})});

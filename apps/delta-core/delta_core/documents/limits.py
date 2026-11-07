@@ -6,9 +6,9 @@ from .ooxml import MAX_UPLOAD
 class DocumentBodyLimit:
     def __init__(self,app):self.app=app
     async def __call__(self,scope,receive,send):
-        if scope['type']!='http' or not scope['path'].startswith('/api/v1/documents') or scope['method'] not in {'POST','PUT'}:
+        if scope['type']!='http' or not (scope['path'].startswith('/api/v1/documents') or scope['path'].startswith('/api/v1/workspaces')) or scope['method'] not in {'POST','PUT','PATCH'}:
             return await self.app(scope,receive,send)
-        maximum=MAX_UPLOAD+65536 if scope['path']=='/api/v1/documents' else 2*1024*1024
+        maximum=MAX_UPLOAD+65536 if (scope['path']=='/api/v1/documents' or scope['path'].endswith('/studio/upload')) else 2*1024*1024
         body=bytearray()
         while True:
             message=await receive()

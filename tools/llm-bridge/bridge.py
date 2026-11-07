@@ -124,7 +124,9 @@ class Bridge:
     async def cloud(self, payload):
         if not self.api_key:
             raise BackendFailure('OpenRouter key is not configured')
-        async with asyncio.timeout(self.config['cloud_timeout']):
+        # Coding requests need room for complete files; simple commands retain the short deadline.
+        timeout=max(self.config['cloud_timeout'],45) if payload.get('max_tokens',0)>1200 else self.config['cloud_timeout']
+        async with asyncio.timeout(timeout):
             response = await self.client.post('https://openrouter.ai/api/v1/chat/completions',
                 headers={'Authorization': 'Bearer '+self.api_key}, json=payload)
             response.raise_for_status()
@@ -286,7 +288,7 @@ def create_app():
             body['parallel_tool_calls'] = False
             body.setdefault('reasoning', {'enabled': False})
             body.setdefault('provider', {'sort': 'latency'})
-            body['max_tokens'] = min(int(body.get('max_tokens', 512)), 1200)
+            body['max_tokens'] = max(1, min(int(body.get('max_tokens', 512)), 6000))
             task = asyncio.create_task(bridge.respond(body))
             try:
                 while not task.done():

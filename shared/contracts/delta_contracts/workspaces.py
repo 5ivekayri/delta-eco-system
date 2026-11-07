@@ -7,6 +7,9 @@ from .devices import StrictModel, URLPayload
 class WorkspaceCreate(StrictModel):
     name: str = Field(min_length=1, max_length=200)
     description: str = Field(default='', max_length=10000)
+    storage_mode: Literal['cloud','local'] = 'cloud'
+    work_type: Literal['general','website','code','documents'] = 'general'
+    storage_device_id: UUID | None = None
 
     @field_validator('name')
     @classmethod
@@ -19,6 +22,7 @@ class WorkspaceCreate(StrictModel):
 class WorkspaceUpdate(StrictModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=10000)
+    work_type: Literal['general','website','code','documents'] | None = None
 
     @model_validator(mode='after')
     def nonnull(self):
