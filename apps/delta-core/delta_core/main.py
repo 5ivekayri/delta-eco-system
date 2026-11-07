@@ -98,7 +98,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     task_lookup = RegistryTaskLookup(app.state.tools)
     app.state.assistant = AssistantService(app.state.engine, app.state.tools, provider, router_provider,
         local_router=ApplicationIntentRouter(ConversationIntentRouter(LocalIntentRouter(task_lookup), task_lookup)),
-        local_threshold=settings.delta_local_intent_threshold, llm_budget_seconds=settings.delta_llm_budget_seconds)
+        application_catalogue=lambda: {key: connection.applications or [] for key, connection in app.state.devices.connections.items()},
+        local_threshold=settings.delta_local_intent_threshold, llm_budget_seconds=max(settings.delta_llm_budget_seconds, 150) if os.environ.get('DELTA_LLM_BRIDGE_URL') else settings.delta_llm_budget_seconds)
     if settings.tts_provider not in {'piper', 'qwen', 'mock', 'disabled'}:
         raise ValueError('TTS_PROVIDER must be piper, qwen, mock or disabled')
     app.state.tts = (PiperTTSProvider(settings.piper_model, settings.tts_max_chars, settings.tts_max_seconds)

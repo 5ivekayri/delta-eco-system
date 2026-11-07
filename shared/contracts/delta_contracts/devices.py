@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-Action = Literal["system_info", "open_url", "open_path", "open_app"]
+Action = Literal["system_info", "open_url", "open_path", "open_app", "close_app", "minimize_app", "capture_screen"]
 
 
 class StrictModel(BaseModel):
@@ -25,7 +25,7 @@ class Registration(StrictModel):
     architecture: str = Field(max_length=64)
     username: str = Field(max_length=255)
     agent_version: str = Field(max_length=32)
-    capabilities: list[Action] = Field(max_length=4)
+    capabilities: list[Action] = Field(max_length=7)
     approval_timeout: int = Field(default=0, ge=0, le=60)
     applications: list[Application] | None = Field(default=None, max_length=1024)
 
@@ -88,4 +88,5 @@ class OpenApplication(ApplicationTarget):
 PAYLOAD_SCHEMAS = {
     "system_info": EmptyPayload, "open_url": URLPayload,
     "open_path": PathPayload, "open_app": AppPayload,
+    "close_app": AppPayload, "minimize_app": AppPayload, "capture_screen": EmptyPayload,
 }

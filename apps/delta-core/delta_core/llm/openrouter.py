@@ -1,8 +1,11 @@
 import asyncio
 import json
 import logging
+import os
+from urllib.parse import urlsplit
 from time import perf_counter
 import httpx
+import jsonschema
 from delta_contracts.errors import DeltaError
 from delta_contracts.tools import ToolCall
 from .base import LLMProvider,LLMTurn
@@ -11,8 +14,17 @@ from .base import LLMProvider,LLMTurn
 class OpenRouterLLMProvider(LLMProvider):
     def __init__(self,api_key:str,model:str,client:httpx.AsyncClient|None=None, *, router=False, max_tokens=1200, timeout_seconds=None):
         self.api_key=api_key;self.model=model;self.client=client
+        bridge_url = os.environ.get('DELTA_LLM_BRIDGE_URL', '').rstrip('/')
+        if bridge_url:
+            parsed = urlsplit(bridge_url)
+            if parsed.scheme != 'http' or parsed.hostname not in {'127.0.0.1', 'localhost', '::1'} or parsed.username or parsed.password or parsed.query or parsed.fragment:
+                raise ValueError('DELTA_LLM_BRIDGE_URL must be a loopback HTTP endpoint')
+        self.endpoint = (bridge_url or 'https://openrouter.ai/api/v1') + '/chat/completions'
+
         self.router=router;self.max_tokens=max_tokens
         self.timeout_seconds = timeout_seconds if timeout_seconds is not None else (20 if router else 30)
+        if bridge_url:
+            self.timeout_seconds = max(self.timeout_seconds, 105)
 
     async def respond(self,messages,tools,context):
         start = perf_counter()
@@ -50,7 +62,7 @@ class OpenRouterLLMProvider(LLMProvider):
         client=self.client or httpx.AsyncClient(timeout=60)
         try:
             for attempt in range(2):
-                response=await client.post('https://openrouter.ai/api/v1/chat/completions',headers={'Authorization':f'Bearer {self.api_key}'},json=payload)
+                response=await client.post(self.endpoint,headers={'Authorization':f'Bearer {self.api_key}'},json=payload)
                 try:
                     body=response.json()
                 except ValueError:
@@ -63,7 +75,7 @@ class OpenRouterLLMProvider(LLMProvider):
                             status=int(error.get('code',status))
                         except (ValueError,TypeError):
                             pass
-                    if status in {500,502,503,504} and attempt==0:
+                    if status in {500,502,503,504} and attempt==0 and self.endpoint.startswith('https://openrouter.ai/'):
                         # Only retry inference before returning any tool calls.
                         await asyncio.sleep(.3)
                         continue
@@ -76,6 +88,9 @@ class OpenRouterLLMProvider(LLMProvider):
             if not isinstance(message, dict) or not isinstance(message.get('content') or '', str):
                 raise ValueError('Invalid assistant message')
             calls=[ToolCall(id=c['id'],name=aliases[c['function']['name']],arguments=json.loads(c['function']['arguments'])) for c in message.get('tool_calls',[])]
+            schemas = {tool['name']: tool['input_schema'] for tool in tools}
+            for call in calls:
+                jsonschema.validate(call.arguments, schemas[call.name])
             if not calls and not (message.get('content') or '').strip():
                 raise ValueError('Empty model response')
             return LLMTurn(text=message.get('content') or '',calls=calls)
@@ -83,7 +98,7 @@ class OpenRouterLLMProvider(LLMProvider):
             raise DeltaError('LLM_UNAVAILABLE','OpenRouter не ответил вовремя. Попробуйте позже или выберите другую модель.',503) from None
         except httpx.HTTPError:
             raise DeltaError('LLM_UNAVAILABLE','Не удалось соединиться с OpenRouter. Проверьте доступ к сети.',503) from None
-        except (ValueError,KeyError,TypeError,IndexError,AttributeError):
+        except (ValueError,KeyError,TypeError,IndexError,AttributeError,jsonschema.ValidationError,jsonschema.SchemaError):
             raise DeltaError('LLM_UNAVAILABLE','Модель вернула пустой или некорректный ответ либо вызов неизвестного инструмента. Команды из этого ответа не выполнялись.',503) from None
         finally:
             if own:await client.aclose()

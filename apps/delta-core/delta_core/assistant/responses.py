@@ -27,8 +27,17 @@ def deterministic_response(result: dict) -> str | None:
     if not result.get('success'):
         return None
     tool, data = result.get('tool'), result.get('data')
-    if tool == 'devices.open_app' and isinstance(data, dict) and data.get('success') is True and data.get('app_name') and data.get('device_name'):
+    if tool in {'devices.open_app','devices.close_app','devices.minimize_app'} and isinstance(data, dict) and data.get('success') is True and data.get('app_name') and data.get('device_name'):
         return data['message']
+    if tool == 'devices.describe_screen' and isinstance(data, dict) and data.get('description'):
+        return data['description']
+    if tool == 'devices.list_apps' and isinstance(data, list):
+        sections = []
+        for device in data:
+            apps = device.get('applications', [])
+            sections.append(f"{device.get('device_name', 'Компьютер')} — доступно программ: {len(apps)}\n" +
+                            '\n'.join('• ' + item['name'] for item in apps))
+        return '\n\n'.join(sections) or 'Доступных приложений нет.'
     if tool == 'services.list' and isinstance(data, list) and all(
         isinstance(item, dict) and isinstance(item.get('name'), str) and isinstance(item.get('status'), str) for item in data
     ):
@@ -81,6 +90,10 @@ def deterministic_response(result: dict) -> str | None:
 def requested_action(message: str) -> str | None:
     text = message.strip().casefold()
     text = re.sub(r'^(?:пожалуйста|please)[, ]+', '', text)
+    if re.match(r'^(?:сверни|свернуть|minimize)\b', text):
+        return 'devices.minimize_app'
+    if re.match(r'^(?:закрой|закрыть|close)\b', text) and not re.search(r'\b(задач\w*|task)\b', text):
+        return 'devices.close_app'
     if re.match(r'^(?:создай|создать|добавь|добавить|create|add)\s+(?:(?:новое|новый|a|new)\s+)*(?:рабочее пространство|пространство|воркспейс|workspace)\b', text):
         return 'workspaces.create'
     required = None

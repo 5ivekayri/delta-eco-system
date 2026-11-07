@@ -178,3 +178,7 @@ Assistant использует предыдущие сообщения и рез
 Аккаунты и вход: [ACCOUNTS.md](docs/ACCOUNTS.md). На этой установке вход по логину/паролю; старый development token используется только между сервисами.
 
 Создание воркспейсов голосом и текстом: [сценарии и контракт](docs/WORKSPACE_VOICE_CREATION.md).
+
+[Управление приложениями и описание экрана](docs/DESKTOP_ACTIONS.md)
+
+[OpenRouter/local LLM bridge](tools/llm-bridge/README.md).

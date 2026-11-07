@@ -136,7 +136,7 @@ class DeviceManager:
         finally:
             connection.pending.pop(command_id, None)
         with Session(self.engine) as session:
-            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=result)
+            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=({**result, 'data': {'image_redacted': True}} if request.action == 'capture_screen' else result))
             session.commit()
         return result
 

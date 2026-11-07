@@ -44,6 +44,21 @@ class ApplicationService:
         return [{'device_id':d['id'],'device_name':d['name'],'applications':self.catalogue(d)} for d in devices]
 
     async def open_app(self, target):
+        return await self.application_action(target, 'open_app')
+
+    async def close_app(self, target):
+        return await self.application_action(target, 'close_app')
+
+    async def minimize_app(self, target):
+        return await self.application_action(target, 'minimize_app')
+
+    def single_target(self, target):
+        devices = self.targets(target)
+        if len(devices) != 1:
+            raise DeltaError('DEVICE_AMBIGUOUS', 'Укажите один компьютер для действия.', 409)
+        return devices[0]
+
+    async def application_action(self, target, action):
         devices = self.targets(target)
         explicit = bool(target.device_id or target.device_name)
         if explicit and len(devices) != 1:
@@ -70,8 +85,13 @@ class ApplicationService:
                 raise DeltaError('APP_TARGET_REQUIRED','Укажите компьютер, где установлено приложение; убедитесь, что его Agent обновлён и подключён.',409)
             raise DeltaError('APP_NOT_AVAILABLE',f"«{target.app_name}» не найдено среди разрешённых приложений на «{devices[0]['name']}». Проверьте установку и настройки Agent.",404)
         device, app = matches[0]
-        result = await self.manager.dispatch(device['id'],CommandRequest(action='open_app',payload={'app_id':app['id']}))
+        result = await self.manager.dispatch(device['id'],CommandRequest(action=action,payload={'app_id':app['id']}))
         if not result['success']:
             return result
+        message = f"Команда открытия «{app['name']}» выполнена на «{device['name']}»."
+        if action == 'close_app':
+            message = f"Приложению «{app['name']}» на «{device['name']}» отправлен запрос закрытия. Если появились несохранённые документы, выберите действие в самом приложении."
+        elif action == 'minimize_app':
+            message = f"Окна «{app['name']}» на «{device['name']}» свёрнуты или скрыты."
         return {**result, 'app_name':app['name'], 'device_id':device['id'], 'device_name':device['name'],
-                'message':f"Команда открытия «{app['name']}» выполнена на «{device['name']}»."}
+                'message':message}

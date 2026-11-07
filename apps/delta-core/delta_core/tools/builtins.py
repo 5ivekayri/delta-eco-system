@@ -17,6 +17,18 @@ def register_builtins(app):
     app.state.tools.register(LocalTool('devices.list_apps',
         'List installed and permitted applications on connected target computers.',
         ApplicationTarget, applications.list_apps, ['read']))
+    app.state.tools.register(LocalTool('devices.close_app',
+        'Request normal application/window close on a target computer. Never force-kill. Unsaved documents may require user input.',
+        OpenApplication, applications.close_app, ['device:open']))
+    app.state.tools.register(LocalTool('devices.minimize_app',
+        'Minimize or hide windows of an installed application on a target computer.',
+        OpenApplication, applications.minimize_app, ['device:open']))
+    async def describe_screen(target):
+        from delta_core.devices.screen import describe_screen
+        return await describe_screen(app, applications, target)
+    app.state.tools.register(LocalTool('devices.describe_screen',
+        'Describe the current screen on one target computer. Always requires local consent to capture and send one screenshot to OpenRouter. Use only when the user explicitly asks to inspect their screen.',
+        ApplicationTarget, describe_screen, ['device:screen']))
     async def devices(arguments):
         with Session(app.state.engine) as session:
             return [serialize(d) for d in session.scalars(select(Device))]

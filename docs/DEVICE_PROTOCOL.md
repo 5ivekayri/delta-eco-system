@@ -36,7 +36,7 @@ Core updates `last_seen` using server time. Configurable expiry marks the device
 {"type":"command_result","command_id":"command-uuid","success":true,"message":"URL opened","data":{}}
 ```
 
-Allowed actions: `system_info` (empty payload), `open_url` (`url`), `open_path` (`path`), `open_app` (`app_id`). Agent validates again even if Core already validated. Logical app IDs resolve through its platform adapter. Local path access is limited by Agent configuration. No shell action exists.
+Allowed actions: `system_info` (empty payload), `open_url` (`url`), `open_path` (`path`), `open_app`, `close_app`, `minimize_app` (`app_id`), `capture_screen` (empty payload). Agent validates again even if Core already validated. Logical app IDs resolve through its platform adapter. Local path access is limited by Agent configuration. No shell action exists.
 
 Core matches command ID **and originating device connection**. Ignore/reject unknown or duplicate results. Record command/result in activity; don't leak bearer tokens. Bounded timeout is reported separately from a negative Agent result. Never replay desktop actions automatically after reconnect or timeout.
 
@@ -100,3 +100,5 @@ a unique permitted app on one connected, catalogue-capable device. Ambiguous
 targets/names require clarification; an explicit offline/unsupported target never
 falls back to another computer. Legacy Agents return AGENT_UPDATE_REQUIRED, not
 a generic model refusal. A failed command is never presented as a successful open.
+
+Desktop 0.3 actions, image limits and privacy: [DESKTOP_ACTIONS.md](DESKTOP_ACTIONS.md).
