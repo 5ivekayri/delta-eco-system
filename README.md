@@ -186,3 +186,10 @@ Assistant использует предыдущие сообщения и рез
 [Документы, версии и ИИ](docs/DOCUMENTS.md)
 
 [Workspace Studio: код, документы, хранение и превью](docs/WORKSPACE_STUDIO.md).
+
+## Linux commands (Agent 0.5.0)
+
+Optional, separately approved command execution through the existing Agent:
+Off / Observe / isolated project / user access. Permissions are saved for the
+server and account; no SSH port is opened. See [permissions and limits](docs/DESKTOP_AGENT.md)
+and [protocol](docs/DEVICE_PROTOCOL.md). Core must be updated before the desktop.

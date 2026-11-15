@@ -262,3 +262,14 @@ Polling intervals and cross-service activity limitations: [Activity and Services
 - [x] Upload/drop, library copy, bounded computer search/import with ambiguity handling.
 - [x] Live global assistant creates workspace and actual landing file; real Agent file round trip.
 - See [verification and limits](WORKSPACE_STUDIO.md).
+
+### Consented Linux commands — 2026-11-15
+- [x] Official skill catalogue checked before code; installed security guidance applied.
+- [x] Scope/permission changes recorded in existing desktop/protocol/security specifications.
+- [x] Separate persistent local grant; startup/refusal/reconnect/server-change UI coverage.
+- [x] Strict contracts, target-device tools, redacted Activity/durable tool history.
+- [x] Native bubblewrap project execution, exit/output limits, cancellation and timeout tests.
+- [x] Linux package and Python builds; 254 server / 76 desktop / 6 frontend tests, Qt smoke.
+- [x] Deployed Core → real model → temporary Linux Agent → verified file write.
+- [x] Updated packaged client opened for local consent; details in DESKTOP_ACTIONS.md.
+- [ ] Root administration, SSH transport and macOS/Windows execution remain future work.

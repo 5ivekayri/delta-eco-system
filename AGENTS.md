@@ -13,3 +13,5 @@ Read docs/REQUIREMENTS.txt, extracted from the original prompt.rtf.
 - Configure secrets through environment. Do not commit credentials or log tokens.
 
 - Maintain specifications alongside behavior/API/configuration/deployment changes. Link new specs from README.md; record verified behavior, acceptance checks and known limitations. Keep Linux deployment and operations instructions aligned with Compose.
+
+User-approved exception (2026-11-15): Linux run_command may execute shell only under the separate persistent local grant and isolation policy in docs/DESKTOP_ACTIONS.md. Never execute it on Core or implicitly enable it via existing full access. All other actions retain their original restrictions.

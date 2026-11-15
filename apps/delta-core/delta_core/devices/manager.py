@@ -119,10 +119,12 @@ class DeviceManager:
         connection.pending[command_id] = future
         message = {"type": "command", "command_id": command_id, "action": request.action, "payload": payload}
         timeout = self.settings.command_timeout + connection.approval_timeout
-        if connection.approval_timeout:
+        if request.action == 'run_command':
+            timeout = payload['timeout_seconds'] + connection.approval_timeout + 5
+        if connection.approval_timeout or request.action == 'run_command':
             message['expires_at'] = time.time() + timeout
         with Session(self.engine) as session:
-            record_event(session, "COMMAND_SENT", request.action, device_id=device_id, details=({**message, 'payload': {'operation': payload.get('operation'), 'path': payload.get('path'), 'content_redacted': True}} if request.action in {'workspace_files','read_file','search_files'} else message))
+            record_event(session, "COMMAND_SENT", request.action, device_id=device_id, details=({**message, 'payload': {'operation': payload.get('operation'), 'path': payload.get('path'), 'content_redacted': True}} if request.action in {'workspace_files','read_file','search_files','run_command'} else message))
             session.commit()
         try:
             async with connection.send_lock:
@@ -136,7 +138,7 @@ class DeviceManager:
         finally:
             connection.pending.pop(command_id, None)
         with Session(self.engine) as session:
-            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=({**result, 'data': {'image_redacted': True}} if request.action in {'capture_screen','workspace_files','read_file','search_files'} else result))
+            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=({**result, 'data': {'image_redacted': True}} if request.action in {'capture_screen','workspace_files','read_file','search_files','run_command'} else result))
             session.commit()
         return result
 

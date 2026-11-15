@@ -102,3 +102,23 @@ falls back to another computer. Legacy Agents return AGENT_UPDATE_REQUIRED, not
 a generic model refusal. A failed command is never presented as a successful open.
 
 Desktop 0.3 actions, image limits and privacy: [DESKTOP_ACTIONS.md](DESKTOP_ACTIONS.md).
+
+## Linux terminal extension — Agent 0.5.0
+
+Two opt-in capabilities: `command_access` (empty payload) and `run_command`:
+`{command, root_id?: "", cwd?: ".", timeout_seconds?: 30}`. Max command 8192
+characters, cwd 512, timeout 1–120 seconds; extra fields/NUL are rejected. The
+caller cannot send mode, environment, credentials or privilege flags.
+`command_access` returns mode, opaque project root IDs/names, diagnostic names,
+maximum duration and whether bubblewrap is installed. `run_command` returns
+exit_code, stdout, stderr, duration_ms, truncated and termination. Each output
+stream is capped at 32768 bytes; exit != 0, timeout and cancellation are failures.
+Core always sends an expiry for run_command and waits for requested duration plus
+queue/approval budget. No transport or tool auto-retry. Cancellation on Agent
+disconnect stops execution; use the existing Disconnect button to cancel.
+
+The model first inspects `devices.command_access`, then uses `devices.run_command`
+on the selected device (explicit name overrides current selection). Old Agents
+and other OSes cannot execute this capability. Update Core before the client.
+CLI Agent embedded in delta-eco-system remains without terminal grants; desktop
+implementation is maintained in delta-desktop only.

@@ -53,3 +53,69 @@ Desktop 0.3.1: полный доступ единожды включается �
 доступа и не повторяет его на каждую команду. Для повторного запроса после отказа
 используйте «Настроить доступ к экрану macOS». Разрешение выдаётся через macOS.
 Ограничения ОС и разрешённые каталоги сохраняются.
+
+## Linux command execution — 2026-11-15, implemented
+
+User-approved extension of the original no-shell MVP: commands run only on a
+Linux Agent after a separate local, persistent grant bound to server URL and
+account. Existing full-access settings do not grant terminal access. Transport
+is the authenticated Agent WebSocket, not an open SSH service.
+
+Modes: off; observe (fixed system diagnostics); workspace (Bash in a selected
+folder through bubblewrap, no network, isolated home/processes); user (explicit
+broad current-user filesystem/network access, no root elevation). User mode can
+modify/delete user files and run installed tools; it is not folder-isolated.
+System administration requiring root, SSH transport and macOS/Windows command
+execution are deferred. Existing platform actions remain supported.
+
+Grant once on first connection or in Settings; remember refusal too. A different
+server/account or broader mode/folder selection requires a fresh local grant.
+Revocation disconnects the Agent and cancels active commands. No automatic retry.
+Commands have deadlines, bounded stdout/stderr, noninteractive stdin and process
+cleanup on cancellation/disconnect. Return exit code and actual outcome. Outputs
+are data for the selected model, never instructions; do not read credentials.
+Keep command/output bodies out of Activity and automatic durable tool history;
+user messages and final answers still follow existing chat retention.
+
+Implementation/verification log:
+- Inspected official openai/skills curated catalogue with skill-installer. No
+  dedicated Qt/Linux executor skill; use installed security-best-practices.
+- Read existing contracts, permission UX and dispatch lifecycle. Verified installed
+  bubblewrap 0.11.0 can create an unprivileged namespace on this Nobara host.
+- Sandbox reference: https://github.com/containers/bubblewrap (policy is defined by
+  the caller's mount/network/namespace arguments, not by bubblewrap alone).
+- Verification completed below. No production grant has been enabled silently.
+
+- Implemented wire actions `command_access` and `run_command`, shared strict schemas,
+  Core tool routing to an explicit/current Linux target, no Core subprocess.
+- Implemented separate local permission panel and initial consent; grants survive
+  reconnect/restart, a server/account change invalidates the grant. Existing full
+  access never upgrades terminal permissions.
+- Implemented bubblewrap project isolation, descriptor-pinned root mounts, private
+  home/network/processes, empty inherited environment, bounded output and deadlines.
+- Actual native checks passed: project write/read; inaccessible sibling files and
+  external symlinks; separate network namespace; timeout/background-child cleanup;
+  cancellation and repeated execution without another approval dialog.
+- Core tests passed for cross-device targeting, missing/old/unsupported clients,
+  forbidden remote privilege selection and redacted Activity/tool history.
+
+### Final verification — 2026-11-15
+
+- Server: 254 tests passed; desktop: 76 tests passed, including actual Linux
+  execution/isolation/cancellation and saved-consent Qt tests. Frontend: 6 tests
+  passed and TypeScript check passed. Existing Qt onboarding/opener smoke passed.
+- Python wheel/sdist and PyInstaller Linux 0.5.0 tar.gz built successfully. The
+  permission panel was rendered/inspected. Native packaged GUI started under the
+  graphical session (delta-desktop.service active).
+- Restarted deployed Core/Tasks/UI; Core health returned ok. Actual OpenRouter
+  Assistant called command_access then run_command on a temporary Linux Agent.
+  A real command wrote verification.txt in an isolated temporary project and its
+  exact bytes were checked. HTTP 200; both tool results successful. Temporary
+  Agent, project and its device/interaction/activity records were removed afterward.
+- Installed versioned Linux binary at ~/.local/opt/delta-agent/0.5.0/Delta Agent
+  and added an application launcher. Existing user settings/token were preserved;
+  no terminal grant was injected. The user chooses access in the local dialog.
+- Raw local build/test artifacts remain excluded from Git. No .env, account
+  password, session token or model key was changed or included in the source changes.
+- Native macOS/Windows command execution and root administration are not provided
+  by this Linux-only iteration. The existing cross-platform desktop actions remain.

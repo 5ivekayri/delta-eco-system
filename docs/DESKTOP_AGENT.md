@@ -137,3 +137,34 @@ Agent 0.2.0. Проверено 227 backend-тестов; сквозной те�
 честный ответ AGENT_UPDATE_REQUIRED без вызова LLM. Фактический запуск Finder
 не подтверждён до установки нового клиента; сервер не может заменить .app удалённо
 через ограниченный протокол Agent. Клиентский PR: https://github.com/5ivekayri/delta-desktop/pull/1.
+
+## Linux terminal permission (0.5.0)
+
+At first connection after this update, choose terminal access locally. The initial
+choice is Off; closing the dialog records Off too. Settings → Терминал Linux can
+change it later. Grant/refusal survives restart and reconnection for the same
+server URL and account. A new server/account or wider mode/folders asks again.
+Changing ordinary Full Access does not enable terminal. To revoke, choose Off and
+save; the Agent disconnects, cancels active commands, then reconnects without them.
+
+Observe accepts only system/disk/memory/processes, not arbitrary read-only shell.
+Workspace runs Bash in a selected project mounted at /workspace with private home,
+no host network, other personal directories or host process namespace. Requires
+Linux bubblewrap (tested 0.11.0) and util-linux prlimit; absence never falls back
+to unrestricted execution. System executables under /usr are available; dependencies
+outside the project and /usr are not. Package downloads require the broader User
+mode. Resource limits: 120 s wall-time maximum, 2 GiB address space per process,
+64 MiB per file, 256 descriptors. These are not aggregate disk/memory quotas.
+
+User mode deliberately allows user-readable/writable files and network; it is not
+a protection boundary for personal files/credentials. The assistant is instructed
+not to access credentials. Environment tokens, shell profiles and SSH-agent sockets
+are not inherited; setuid elevation is disabled. No root/sudo workflow is supplied.
+Do not run background services: command descendants are terminated; side effects
+already made, or work handed to an existing external service, are not rolled back.
+The client retains no raw command/output log; it reports status/error in Diagnostics.
+Raw output is sent to Core/current model; ordinary user prompts/final answers remain
+in chat history. Commands, exit status and partial failures are never claimed as
+success solely on the LLM's statement.
+
+Details and implementation log: [DESKTOP_ACTIONS.md](DESKTOP_ACTIONS.md).

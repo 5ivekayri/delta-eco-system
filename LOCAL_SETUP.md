@@ -104,3 +104,12 @@ SHA-256: 54c7fd53669d88b8ae0325d92e95298df211867a3e734549976fafd260750009.
 
 Локальный управляющий скрипт сохранён в Git: `scripts/manage_local.py`; start-local.sh
 и stop-local.sh используют его. `.runtime` содержит только локальные данные и секреты.
+
+## Linux command tools — 2026-11-15
+
+Core updated/restarted with devices.command_access/run_command. Desktop 0.5.0
+built, installed at ~/.local/opt/delta-agent/0.5.0/Delta Agent and opened via the
+transient delta-desktop.service. Choose the terminal level locally once; it is
+saved for the current server/account. Existing CLI Agent remains without terminal.
+No SSH port/service or root grant was added. Live model/Agent file-write check
+passed in a temporary isolated project; test records were cleaned up.

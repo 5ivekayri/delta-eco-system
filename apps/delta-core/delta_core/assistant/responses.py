@@ -96,6 +96,8 @@ def requested_action(message: str) -> str | None:
         return 'devices.close_app'
     if re.match(r'^(?:создай|создать|добавь|добавить|create|add)\s+(?:(?:новое|новый|a|new)\s+)*(?:рабочее пространство|пространство|воркспейс|workspace)\b', text):
         return 'workspaces.create'
+    if re.match(r'^(?:выполни|выполнить|execute|run)\s+(?:команду|команд[уы]|command)\b', text):
+        return 'devices.run_command'
     required = None
     for pattern, name in [
         (r'^(?:добавь|создай|добавить|создать)\b', 'tasks.create'),
