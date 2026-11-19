@@ -8,7 +8,7 @@ from delta_contracts.storage import serialize,utcnow
 from delta_core.tools.registry import LocalTool,ToolRegistry
 from .models import DocumentRecord,DocumentVersion
 from .schemas import Changes
-from . import ooxml
+from . import ooxml, rich
 
 
 class DocumentService:
@@ -41,16 +41,34 @@ class DocumentService:
             if version is None:raise DeltaError('VERSION_NOT_FOUND','Версия не найдена.',404)
             return serialize(row),version.content,number
 
+    def rename(self,owner,doc_id,body):
+        with Session(self.engine) as db:
+            self.owned(db,owner,doc_id)
+            changed=db.execute(update(DocumentRecord).where(
+                DocumentRecord.id==doc_id,DocumentRecord.owner_id==owner,
+                DocumentRecord.name==body.base_name,
+            ).values(name=body.name,updated_at=utcnow()))
+            if changed.rowcount!=1:
+                raise DeltaError('DOCUMENT_NAME_CONFLICT','Название уже изменено. Откройте документ заново.',409)
+            db.commit()
+            return serialize(self.owned(db,owner,doc_id))
+
+    def copy(self,owner,doc_id,body):
+        _,data,_=self.source(owner,doc_id,body.revision)
+        # Copy the immutable version as-is, including parts not rendered by the editor.
+        row=self.upload(owner,body.name,data)
+        return self.read(owner,row['id'])
+
     def read(self,owner,doc_id,revision=None):
         row,data,number=self.source(owner,doc_id,revision)
         with Session(self.engine) as db:
             versions=[{'revision':v.revision,'created_at':v.created_at.isoformat()} for v in db.scalars(select(DocumentVersion).where(DocumentVersion.document_id==doc_id).order_by(DocumentVersion.revision.desc()))]
-        return {**row,'view_revision':number,'blocks':ooxml.blocks(data),'versions':versions}
+        return {**row,'view_revision':number,'blocks':ooxml.blocks(data),'versions':versions,'rich':rich.view(data)}
 
-    def save(self,owner,doc_id,body):
+    def save(self,owner,doc_id,body,formatted=False):
         row,data,number=self.source(owner,doc_id)
         if body.base_revision!=number:raise DeltaError('DOCUMENT_CONFLICT','Документ уже изменён. Откройте актуальную версию.',409)
-        content=ooxml.apply(data,body)
+        content=(rich.apply if formatted else ooxml.apply)(data,body)
         with Session(self.engine) as db:
             changed=db.execute(update(DocumentRecord).where(DocumentRecord.id==doc_id,DocumentRecord.owner_id==owner,DocumentRecord.revision==number).values(revision=number+1,updated_at=utcnow()))
             if changed.rowcount!=1:raise DeltaError('DOCUMENT_CONFLICT','Документ уже изменён. Откройте актуальную версию.',409)

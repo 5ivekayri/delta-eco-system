@@ -12,6 +12,7 @@ from delta_core.workspaces.models import Workspace
 from delta_core.llm.mock import describe_result
 from delta_core.llm.base import LLMTurn
 from delta_core.voice.telemetry import VoiceTimings
+from .identity import identity_question, IDENTITY_REPLY, IDENTITY_POLICY
 from .intents import IntentRouter
 from .models import Interaction
 from delta_core.devices.terminal import safe_terminal_call, safe_terminal_result
@@ -79,8 +80,12 @@ class AssistantService:
                        'devices': [{'id': d.id, 'display_name': d.display_name, 'status': d.status} for d in session.scalars(select(Device))]}
         log('ASSISTANT_REQUEST', message, device_id=device_id)
         local_call = None
-        local_answer = None
-        if self.local_router is not None:
+        local_answer = IDENTITY_REPLY if identity_question(message) else None
+        if local_answer:
+            timings.route_source = 'local'
+            timings.confidence = 1.0
+            timings.execution_path = 'fast'
+        if self.local_router is not None and not local_answer:
             with timings.measure('local_router_ms'):
                 decision = await self.local_router.route(message, self.tools.specifications(), context)
             timings.confidence = decision.confidence
@@ -103,6 +108,7 @@ class AssistantService:
                   'Never invent local paths or URLs. For coding or landing pages set work_type website/code, choose storage_mode cloud or local as requested (ask if unspecified); local storage needs storage_device_id. '
                   'Use workspaces.build after creation to actually create the requested site or edit workspace files/documents. Managed local folders are created by Agent; no custom path is needed. '
                   'After a successful creation, reuse the returned workspace ID for any requested launch or task. ')
+        system += IDENTITY_POLICY
         if simple:
             system += 'Route this direct command to the required tool. Be brief; do not narrate the action. '
         system += ('Use the preceding conversation to resolve follow-up requests, corrections, pronouns and task titles. '

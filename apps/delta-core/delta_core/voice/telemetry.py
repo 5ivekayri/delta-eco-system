@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from time import perf_counter
+from delta_core.llm.telemetry import snapshot as inference_snapshot
 
 
 @dataclass
@@ -37,4 +38,4 @@ class VoiceTimings:
             'route_source': self.route_source, 'confidence': self.confidence,
             'server_total_ms': round((perf_counter() - self.started) * 1000, 2),
             'router_calls': self.router_calls, 'response_generation_calls': self.response_generation_calls,
-            'execution_path': self.execution_path, 'tts_status': self.tts_status}
+            'execution_path': self.execution_path, 'tts_status': self.tts_status, **inference_snapshot()}

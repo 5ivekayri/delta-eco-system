@@ -126,4 +126,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                                              settings.voice_max_seconds, settings.whisper_language, settings.whisper_cpu_threads))
     app.include_router(voice_router)
     app.add_middleware(VoiceUploadLimit, max_bytes=settings.voice_max_bytes + 64 * 1024)
+    from delta_core.llm.telemetry import InferenceDiagnostics
+    app.add_middleware(InferenceDiagnostics)
     return app

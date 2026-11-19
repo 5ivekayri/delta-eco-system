@@ -1,6 +1,7 @@
 import json
 import re
 from .base import LLMProvider,LLMTurn
+from .telemetry import record
 from delta_contracts.tools import ToolCall
 
 
@@ -24,6 +25,7 @@ def describe_result(result:dict)->str:
 
 class MockLLMProvider(LLMProvider):
     async def respond(self,messages,tools,context):
+        record(provider="mock", model="mock", role="assistant", duration_ms=0, outcome="ok")
         if messages[-1]['role']=='tool':
             current = max((i for i, m in enumerate(messages) if m['role'] == 'user'), default=-1)
             results=[json.loads(m['content']) for m in messages[current + 1:] if m['role']=='tool']

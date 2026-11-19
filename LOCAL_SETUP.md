@@ -113,3 +113,56 @@ transient delta-desktop.service. Choose the terminal level locally once; it is
 saved for the current server/account. Existing CLI Agent remains without terminal.
 No SSH port/service or root grant was added. Live model/Agent file-write check
 passed in a temporary isolated project; test records were cleaned up.
+
+## Постоянный запуск — 2026-11-18
+
+По запросу пользователя остановлен и отключён автозапуск
+`pshenichflix-frontend.service` (порт 5173); порт проверен и свободен.
+Остальные службы Пшеничфликса не изменялись.
+Создана постоянная пользовательская служба
+`~/.config/systemd/user/delta-local.service`, запускающая
+`scripts/manage_local.py start` с Restart=on-failure и RestartSec=10.
+Включены `systemctl --user enable --now delta-local.service` и
+`loginctl enable-linger kayri`: служба работает независимо от открытого
+терминала/приложения и настроена на запуск после перезагрузки без входа пользователя.
+Фактическая перезагрузка в рамках проверки не выполнялась.
+Проверено: unit enabled/active, Linger=yes; Core :8000/health и Tasks
+:8001/health вернули HTTP 200/status ok, frontend :8081 вернул HTTP 200.
+Адреса UI: http://localhost:8081/ и http://192.168.0.28:8081/.
+Управление: `systemctl --user start|stop|restart delta-local.service`;
+журнал: `journalctl --user -u delta-local.service`.
+
+## Обновление ассистента и журнала — 2026-11-18
+
+Добавлен фиксированный ответ на типовые вопросы о базовой модели/создателе Delta
+и системная инструкция для остальных формулировок. В Assistant и Settings добавлен
+переключатель «Журнал запросов LLM»: провайдер, модель, время, результат и переход
+с OpenRouter на локальную LLM. Подробности и ограничения: docs/VOICE_LATENCY.md.
+Frontend пересобран; dist/downloads сохранён и восстановлен. Постоянная служба
+`delta-local.service` перезапущена, Core/Tasks/UI работают, порт 5173 свободен.
+Проверка рабочего API выполнена через существующий разрешённый desktop endpoint
+с текущей сессией Agent; учётные данные не менялись. Browser UI проверен отдельно
+на временных фикстурах, поскольку браузер открывает экран входа. Тестовый HTTP-сервер
+после проверки остановлен. Проверки: 273 + 9 Python tests, 7 UI tests, tsc/build.
+
+## Word-читалка и мини-редактор — 2026-11-19
+
+Раздел «Документы» заменён на интерфейс текстового процессора: светлый лист,
+режимы чтения/редактирования, библиотека с поиском, создание DOCX, панель
+форматирования, поиск по тексту, масштаб, Ctrl+S, история версий и боковой ИИ.
+Ручные правки сохраняются отдельным rich API с проверкой ревизии и владельца;
+неизменённые ZIP-части DOCX сохраняются. Спецификация: docs/DOCUMENTS.md.
+
+Проверки: 278 backend tests и 14 frontend tests passed, tsc и production build
+успешны, npm audit --omit=dev — 0 vulnerabilities. Новая функциональность проверена
+в браузере на изолированном localhost-сервере с отдельной SQLite: чтение, частичное
+форматирование 16 pt/bold, Enter, Ctrl+S, таблица/отмена, новый файл, повторное
+открытие и поиск через границу форматирования. Скачанный DOCX отрендерен и просмотрен;
+изображения, колонтитулы, стили и другие ZIP-части совпали с исходником.
+
+Production frontend установлен атомарной заменой dist; downloads сохранены.
+Предыдущая сборка: .runtime/ui-before-word-1795036696. delta-local.service
+перезапущена и active; Core :8000, Tasks :8001, UI :8081 вернули HTTP 200.
+Новые маршруты /documents/blank и /documents/{doc_id}/content есть в live OpenAPI.
+Порт 5173 остаётся свободным. Тестовый сервер :8817 остановлен после проверки;
+учётные записи и пользовательские документы рабочего сервиса не изменялись.

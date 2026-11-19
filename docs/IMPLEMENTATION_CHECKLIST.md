@@ -273,3 +273,41 @@ Polling intervals and cross-service activity limitations: [Activity and Services
 - [x] Deployed Core → real model → temporary Linux Agent → verified file write.
 - [x] Updated packaged client opened for local consent; details in DESKTOP_ACTIONS.md.
 - [ ] Root administration, SSH transport and macOS/Windows execution remain future work.
+
+## Word reader and mini processor — 2026-11-19
+
+- [x] Page reading/editing modes, collapsible library and AI panel, new DOCX creation.
+- [x] Inline bold/italic/underline, font/size, paragraph styles/alignment, existing list styles.
+- [x] Enter/delete/merge paragraphs, editable plain table cells, read-only embedded objects.
+- [x] Search, zoom, word count, save status, Ctrl+S, undo/redo and immutable revisions.
+- [x] Version/owner validation, original ZIP-part preservation, regression tests and browser checks.
+- [x] Exported DOCX rendered and visually inspected; documentation updated.
+- [ ] Exact Word pagination, headers/footers in reader, merged-table layout editing, image insertion.
+
+## Document library improvements — 2026-11-19
+
+Autonomous improvement selected after reviewing the current document workflow:
+rename files and create independent copies, including from historical revisions.
+This lets users reuse templates and recover earlier content without overwriting
+the source. No new infrastructure or database migration is planned.
+
+- [x] Owner-scoped rename with name conflict protection and strict filename validation.
+- [x] Copy an explicitly selected saved revision, preserving the DOCX bytes.
+- [x] Familiar name dialog, clear unsaved-change handling and accessible controls.
+- [x] Backend/browser regression checks, production build, deployment and documentation.
+- [x] Browser check exposed an editor lifecycle crash when switching from editing to
+  a historical revision; removed the stale view access and verified the transition again.
+- [x] 288 backend / 14 frontend tests pass; Core/Tasks/UI HTTP 200, persistent unit
+  active, 5173 unused. Frontend download packages preserved during deployment.
+- Details and local endpoint measurements: [DOCUMENTS.md](DOCUMENTS.md).
+
+## Release checkpoint — 2026-11-19
+
+- Consolidated the deployed Word reader/editor, document library operations,
+  assistant identity response policy and opt-in inference diagnostics for Git publication.
+- Existing GitHub authentication and push access verified without changing credentials.
+- Publication branch: `feature/document-editor-and-diagnostics`; existing Git author retained.
+- Checked the diff for whitespace errors and common credential patterns; no matches.
+- Desktop repository has no pending changes; no empty commit is needed there.
+- Validation remains 288 backend / 14 frontend tests and successful production build;
+  the final editor lifecycle fix was additionally verified in Chromium.

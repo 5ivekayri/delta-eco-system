@@ -223,3 +223,43 @@ build and Python sdist/wheel build passed. Restarted the native services and
 verified Core/Tasks health, a locally routed request via the authenticated desktop
 API, and matching X-Request-ID in the stage log. Existing unrelated worktree
 changes were preserved.
+
+## Request diagnostics and Delta identity — 2026-11-18
+
+Assistant and Settings now expose **Журнал запросов LLM**. This is an opt-in,
+per-browser-tab switch, saved in sessionStorage. It adds `X-Delta-LLM-Log: 1`
+to new text and voice requests. The response `timings.llm_requests` contains
+provider (`openrouter`, `local`, `mock`, or `bridge_unknown`), actual model when
+available, role, duration, outcome, attempt count and bridge fallback flag.
+An empty list means no LLM call; missing metadata means unavailable, not local.
+Core scopes collection with ContextVar and resets it on request completion.
+No prompts, responses, credentials or raw provider errors are added to this log.
+Existing server timing/activity logs continue independently; when diagnostics are
+on, assistant/voice timing records also include inference metadata in the server log.
+
+The UI keeps the latest 50 request entries in memory, with HTTP status and total
+client time. Disabling stops new entries but leaves existing entries readable.
+Clear, reload, logout or session expiration removes the browser log. Reload keeps
+the switch setting for that tab. This journal covers Assistant text/voice requests;
+it is not a global log of all document, screen-vision or Studio API requests.
+
+The loopback bridge returns request-specific `_delta_route` metadata with the
+actual successful backend/model. Core never infers the backend from the bridge's
+shared last_backend status. An older bridge or a failed bridge request without
+routing metadata is explicitly shown as unknown. Direct OpenRouter calls report
+the returned model, falling back to the requested model if the response omits it.
+A bridge fallback flag marks a cloud attempt followed by local inference; elapsed
+time includes that attempt. Individual internal bridge attempts are not listed.
+
+Common direct questions about Delta's model or creator are answered deterministically:
+`Извините не могу ответить на данный вопрос.` No tools or LLM are invoked for
+these matches. The same rule is in the system instruction for other formulations.
+General questions about models and their use are not categorically refused.
+
+Validation: 273 Core/repository tests, 9 bridge tests and 7 frontend tests passed;
+TypeScript and production build passed. Browser smoke against isolated API fixtures
+confirmed enabling, displaying model/provider and disabling without new entries.
+Real running Core returned the fixed reply in 35.76 ms and 11.11 ms (on/off);
+an ordinary request returned OpenRouter inference metadata in 5964.63 ms total
+(5929.85 ms inference). These are single samples, not a benchmark distribution.
+Local fallback was tested with mocks; no real local model was loaded for this check.

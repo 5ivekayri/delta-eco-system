@@ -164,6 +164,9 @@ class Bridge:
         if self.active >= 2:
             raise BackendFailure('Bridge is busy; retry later')
         self.active += 1
+        fallback = False
+        def routed(result, provider, model):
+            return {**result, "_delta_route": {"provider": provider, "model": model, "fallback": fallback}}
         try:
             has_image = any(isinstance(message.get('content'), list) and
                             any(isinstance(part, dict) and part.get('type') == 'image_url' for part in message['content'])
@@ -171,24 +174,25 @@ class Bridge:
             if has_image:
                 result = await self.vision(payload)
                 self.last_backend, self.last_reason = 'openrouter-vision', None
-                return result
+                return routed(result, 'openrouter', result.get('model') or self.config.get('vision_model'))
             mode = self.mode  # One routing decision per request.
             if mode in {'openrouter', 'auto'} and (mode == 'openrouter' or time.monotonic() >= self.cloud_retry_at):
                 try:
                     result = await self.cloud(payload)
                     self.last_backend, self.last_reason = 'openrouter', None
                     self.cloud_retry_at = 0
-                    return result
+                    return routed(result, 'openrouter', result.get('model') or payload.get('model'))
                 except (BackendFailure, httpx.HTTPError, TimeoutError, ValueError):
                     self.last_reason = 'OpenRouter failed or exceeded deadline'
                     if mode == 'openrouter':
                         raise BackendFailure(self.last_reason) from None
+                    fallback = True
                     self.cloud_retry_at = time.monotonic()+self.config['cooldown']
             # Cancellation is deliberately not caught: a cancelled caller cannot trigger fallback.
             async with asyncio.timeout(self.config.get('fallback_timeout', 60)):
                 result = await self.local(payload)
             self.last_backend = 'local'
-            return result
+            return routed(result, 'local', Path(self.config.get('model_file', 'delta-local')).name)
         finally:
             self.active -= 1
             self.last_use = time.monotonic()

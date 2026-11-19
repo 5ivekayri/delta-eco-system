@@ -21,7 +21,9 @@ def make():
 @pytest.mark.asyncio
 async def test_cloud_success_does_not_load_local():
     obj = make()
-    assert await obj.respond(PAYLOAD) == REPLY
+    result = await obj.respond(PAYLOAD)
+    assert result['choices'] == REPLY['choices']
+    assert result['_delta_route']['provider'] == 'openrouter'
     obj.local.assert_not_called()
     assert obj.active == 0
 
@@ -29,7 +31,9 @@ async def test_cloud_success_does_not_load_local():
 @pytest.mark.asyncio
 async def test_failure_falls_back_once_and_opens_cooldown():
     obj = make(); obj.cloud.side_effect = TimeoutError()
-    await obj.respond(PAYLOAD); await obj.respond(PAYLOAD)
+    result = await obj.respond(PAYLOAD)
+    assert result['_delta_route']['provider'] == 'local' and result['_delta_route']['fallback']
+    await obj.respond(PAYLOAD)
     assert obj.cloud.call_count == 1
     assert obj.local.call_count == 2
     assert obj.last_backend == 'local'
@@ -102,7 +106,9 @@ async def test_images_use_vision_only_and_strip_tools():
     obj.client.post.return_value=httpx.Response(200,json=REPLY,request=httpx.Request('POST','https://example.test'))
     payload={'messages':[{'role':'user','content':[{'type':'image_url','image_url':{'url':'data:image/jpeg;base64,AAAA'}}]}],
              'tools':[{'function':{'name':'shell'}}],'tool_choice':'auto'}
-    assert await obj.respond(payload)==REPLY
+    result = await obj.respond(payload)
+    assert result['choices'] == REPLY['choices']
+    assert result['_delta_route']['provider'] == 'openrouter'
     posted=obj.client.post.call_args.kwargs['json']
     assert posted['model']=='test-vision' and 'tools' not in posted and 'tool_choice' not in posted
     obj.cloud.assert_not_called();obj.local.assert_not_called()

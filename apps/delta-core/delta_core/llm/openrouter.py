@@ -9,6 +9,7 @@ import jsonschema
 from delta_contracts.errors import DeltaError
 from delta_contracts.tools import ToolCall
 from .base import LLMProvider,LLMTurn
+from .telemetry import record
 
 
 class OpenRouterLLMProvider(LLMProvider):
@@ -29,21 +30,26 @@ class OpenRouterLLMProvider(LLMProvider):
     async def respond(self,messages,tools,context):
         start = perf_counter()
         outcome = 'error'
+        bridge = not self.endpoint.startswith('https://openrouter.ai/')
+        trace = {'provider': 'bridge_unknown' if bridge else 'openrouter',
+                 'model': None if bridge else self.model,
+                 'role': 'router' if self.router else 'assistant', 'attempts': 0}
         try:
             # One wall-clock deadline covers connect, body reads AND the retry.
             # httpx's read timeout alone resets whenever another chunk arrives.
             async with asyncio.timeout(self.timeout_seconds):
-                result = await self._respond(messages,tools,context)
+                result = await self._respond(messages,tools,context,trace)
                 outcome = 'ok'
                 return result
         except TimeoutError:
             outcome = 'timeout'
             raise DeltaError('LLM_UNAVAILABLE','Превышено время ожидания модели. Попробуйте позже или выберите другую модель.',503) from None
         finally:
+            record(**trace, duration_ms=round((perf_counter()-start)*1000,2), outcome=outcome)
             logging.getLogger(__name__).info(json.dumps({'event':'llm_timing', 'role':'router' if self.router else 'assistant',
                 'duration_ms':round((perf_counter()-start)*1000,2),'outcome':outcome}))
 
-    async def _respond(self,messages,tools,context):
+    async def _respond(self,messages,tools,context,trace):
         if not self.api_key or not self.model:
             raise DeltaError('LLM_UNAVAILABLE','Configure OPENROUTER_API_KEY and the router/assistant model',503)
         aliases={t['name'].replace('.','__'):t['name'] for t in tools}
@@ -62,6 +68,7 @@ class OpenRouterLLMProvider(LLMProvider):
         client=self.client or httpx.AsyncClient(timeout=60)
         try:
             for attempt in range(2):
+                trace['attempts'] += 1
                 response=await client.post(self.endpoint,headers={'Authorization':f'Bearer {self.api_key}'},json=payload)
                 try:
                     body=response.json()
@@ -81,6 +88,14 @@ class OpenRouterLLMProvider(LLMProvider):
                         continue
                     raise provider_error(status)
                 break
+            if not self.endpoint.startswith('https://openrouter.ai/'):
+                route = body.get('_delta_route', {}) if isinstance(body, dict) else {}
+                if isinstance(route, dict) and route.get('provider') in {'local', 'openrouter'}:
+                    trace['provider'] = route['provider']
+                    trace['fallback'] = route.get('fallback') is True
+                    trace['model'] = str(route.get('model') or 'unknown')[:200]
+            elif isinstance(body, dict) and isinstance(body.get('model'), str):
+                trace['model'] = body['model'][:200]
             choice=body['choices'][0]
             if choice.get('finish_reason')=='length':
                 raise DeltaError('LLM_UNAVAILABLE','Модель исчерпала лимит ответа. Сократите запрос или выберите другую модель; неполные команды не выполнялись.',503)

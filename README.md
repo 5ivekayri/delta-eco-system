@@ -193,3 +193,17 @@ Optional, separately approved command execution through the existing Agent:
 Off / Observe / isolated project / user access. Permissions are saved for the
 server and account; no SSH port is opened. See [permissions and limits](docs/DESKTOP_AGENT.md)
 and [protocol](docs/DEVICE_PROTOCOL.md). Core must be updated before the desktop.
+
+### Журнал запросов ассистента
+
+В Assistant или Settings включите **Журнал запросов LLM**, чтобы видеть фактический
+провайдер (OpenRouter/локальная LLM), модель, длительность и результат новых
+текстовых/голосовых запросов. Выключение прекращает запись. Подробности, политика
+ответов о модели Delta и проверенные ограничения: [VOICE_LATENCY.md](docs/VOICE_LATENCY.md#request-diagnostics-and-delta-identity--2026-11-18).
+
+### Word-документы
+
+В разделе **Документы** доступны чтение на странице, создание DOCX, редактирование
+текста с панелью форматирования, поиск, масштаб, Ctrl+S, история версий и помощник.
+Изображения и сложные объекты сохраняются в исходном файле. Поддерживаемые возможности
+и ограничения описаны в [DOCUMENTS.md](docs/DOCUMENTS.md).

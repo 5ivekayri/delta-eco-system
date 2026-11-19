@@ -1,4 +1,5 @@
 import {FormEvent,useEffect,useRef,useState} from 'react';
+import {RequestLog} from './RequestLog';
 import {WorkingIndicator} from './WorkingIndicator';
 import {cancelSpeech} from './speech';
 import {LatencyDetails} from './LatencyDetails';
@@ -23,6 +24,7 @@ export function Assistant(){
     try{const response=await sendMessage(userMessage,deviceId);setHistory(h=>[...h,{...response,user_message:userMessage,created_at:new Date().toISOString()}]);setMessage('');}
     catch(e){setError((e as Error).message);if(e instanceof ApiError)setErrorTimings(e.timings);}finally{setBusy(false);}}
   return <div className="assistant"><div className="assistant-context"><label>Текущий компьютер<select aria-label="Текущий компьютер" value={deviceId} onChange={e=>{setDeviceId(e.target.value);sessionStorage.setItem('delta-device',e.target.value);}}><option value="">Выберите для команд «на этом компьютере»</option>{devices.map(d=><option value={d.id} key={d.id}>{d.display_name} · {d.status}</option>)}</select></label></div>
+    <RequestLog/>
     <div className="messages">{!history.length&&<div className="chat-empty"><span className="symbol">Δ</span><h2>Что сделаем сегодня?</h2><p>Ваши устройства, проекты и задачи — в одном разговоре.</p><div className="suggestions">{['Покажи устройства','Покажи задачи','Добавь задачу протестировать API','Открой Dark Weather','Создай рабочее пространство Диплом'].map(text=><button key={text} onClick={()=>setMessage(text)}>{text}</button>)}</div></div>}{history.map(item=><div className="exchange" key={item.id}><div className="user-message"><span>YOU</span><p>{item.user_message}</p></div><div className="assistant-message"><span>Δ DELTA</span><MarkdownMessage text={item.assistant_text}/>{debug&&!item.timings&&item.route_source&&<p className="route-source">{item.route_source==='local' ? 'Local route' : 'LLM route'} · {item.local_router_ms?.toFixed(2)} ms · confidence {Math.round((item.confidence??0)*100)}%</p>}{debug&&item.timings&&<LatencyDetails timings={item.timings}/>}{debug&&item.tool_calls.length>0&&<details><summary>Tool execution details</summary><pre>{JSON.stringify({calls:item.tool_calls,results:item.tool_results},null,2)}</pre></details>}</div></div>)}<div ref={bottom}/></div>
     {transcript&&<div className="voice-transcript"><strong>Распознано</strong><p>{transcript}</p></div>}
     <VoiceInput disabled={busy} deviceId={deviceId} onBusy={value=>{setVoiceBusy(value);if(value)setSpokenResponse(undefined);}}

@@ -3,7 +3,8 @@ from fastapi import APIRouter,Request,UploadFile,File,Query
 from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 from urllib.parse import quote
-from .schemas import SaveInput,AIInput
+from .schemas import SaveInput,AIInput,DocumentName,RenameInput,CopyInput
+from .rich import RichSaveInput
 from .ooxml import MAX_UPLOAD
 from delta_contracts.errors import DeltaError
 
@@ -27,6 +28,38 @@ async def upload(request:Request,file:UploadFile=File(...)):
         data=await file.read(MAX_UPLOAD+1)
         return await run_in_threadpool(request.app.state.documents.upload,owner(request),file.filename,data)
     finally:await file.close()
+
+
+@router.post('/blank', status_code=201)
+def blank(body:DocumentName,request:Request):
+    from io import BytesIO
+    from docx import Document
+    from docx.shared import Mm
+    name=body.name.strip()
+    if not name:raise DeltaError('INVALID_NAME','Введите название документа.',422)
+    document=Document()
+    section=document.sections[0]
+    section.page_width=Mm(210);section.page_height=Mm(297)
+    section.top_margin=section.bottom_margin=section.left_margin=section.right_margin=Mm(20)
+    document.add_paragraph('')
+    out=BytesIO();document.save(out)
+    row=request.app.state.documents.upload(owner(request),name if name.lower().endswith('.docx') else name+'.docx',out.getvalue())
+    return request.app.state.documents.read(owner(request),row['id'])
+
+
+@router.patch('/{doc_id}')
+def rename(doc_id:UUID,body:RenameInput,request:Request):
+    return request.app.state.documents.rename(owner(request),str(doc_id),body)
+
+
+@router.post('/{doc_id}/copy',status_code=201)
+def copy_document(doc_id:UUID,body:CopyInput,request:Request):
+    return request.app.state.documents.copy(owner(request),str(doc_id),body)
+
+
+@router.put('/{doc_id}/content')
+def save_content(doc_id:UUID,body:RichSaveInput,request:Request):
+    return request.app.state.documents.save(owner(request),str(doc_id),body,formatted=True)
 
 
 @router.get('/{doc_id}')

@@ -1,3 +1,4 @@
+import {addRequestLog, loggingEnabled, InferenceRequest} from './requestLog';
 export class ApiError extends Error {
   constructor(message: string, public transcript?: string, public timings?: VoiceTimings) {super(message);}
 }
@@ -6,13 +7,19 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set('X-Delta-Request', '1');
   if (init?.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
-  const response = await fetch(path, {...init, headers});
+  const diagnostic = loggingEnabled() && path === '/core/api/v1/assistant/message';
+  if (diagnostic) headers.set('X-Delta-LLM-Log', '1');
+  const started = performance.now();
+  let response: Response;
+  try {response = await fetch(path, {...init, headers});}
+  catch (error) {if(diagnostic)addRequestLog('Текст',0,performance.now()-started);throw error;}
+  const body = await response.json().catch(() => ({}));
+  if(diagnostic)addRequestLog('Текст',response.status,performance.now()-started,body.timings?.llm_requests);
   if (response.status === 401) window.dispatchEvent(new Event('delta-session-expired'));
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
     throw new ApiError(body.message || body.error_code || `HTTP ${response.status}`, body.transcript, body.timings);
   }
-  return response.json();
+  return body;
 }
 export const getHealth = () => request<Health>('/core/health');
 
@@ -46,6 +53,7 @@ export const saveBinding=(id:string,body:{device_id:string;local_path:string;app
 export const launchWorkspace=(id:string,device_id:string)=>request<CommandResult&{results:CommandResult[]}>(`/core/api/v1/workspaces/${id}/launch`,{method:'POST',body:JSON.stringify({device_id})});
 
 export interface VoiceTimings {
+  llm_requests?: InferenceRequest[];
   context_ms?:number; persistence_ms?:number;
   route_source?:'local'|'llm'; local_router_ms?:number; confidence?:number;
   upload_ms:number; stt_ms:number; router_ms:number; tool_ms:number;
@@ -89,6 +97,9 @@ export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, r
     if (signal?.aborted) {reject(new DOMException('Aborted', 'AbortError')); return;}
     xhr.open('POST', '/core/api/v1/assistant/voice');
     xhr.setRequestHeader('X-Delta-Request', '1');
+    const diagnostic = loggingEnabled();
+    if(diagnostic)xhr.setRequestHeader('X-Delta-LLM-Log', '1');
+    const logFailure = () => {if(diagnostic)addRequestLog('Голос',0,performance.now()-started);};
     xhr.timeout = 180000;
     xhr.upload.onload = () => {uploadMs = performance.now() - started;};
     xhr.onload = () => {
@@ -98,13 +109,14 @@ export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, r
         if (body.timings) body.timings = {...body.timings,
           client_upload_ms: uploadMs, finalization_ms: started - recordingEndedAt,
           total_ms: performance.now() - recordingEndedAt};
+        if(diagnostic)addRequestLog('Голос',xhr.status,performance.now()-started,body.timings?.llm_requests);
         if (xhr.status >= 200 && xhr.status < 300) resolve(body);
         else reject(new ApiError(body.message || body.error_code || `HTTP ${xhr.status}`, body.transcript, body.timings));
-      } catch {reject(new ApiError(`HTTP ${xhr.status}: некорректный ответ сервера`));}
+      } catch {logFailure();reject(new ApiError(`HTTP ${xhr.status}: некорректный ответ сервера`));}
     };
-    xhr.onerror = () => {cleanup();reject(new ApiError('Сеть недоступна. Проверьте историю перед повторной отправкой.'));};
-    xhr.ontimeout = () => {cleanup();reject(new ApiError('Время ожидания истекло. Проверьте историю перед повторной отправкой.'));};
-    xhr.onabort = () => {cleanup();reject(new DOMException('Aborted', 'AbortError'));};
+    xhr.onerror = () => {cleanup();logFailure();reject(new ApiError('Сеть недоступна. Проверьте историю перед повторной отправкой.'));};
+    xhr.ontimeout = () => {cleanup();logFailure();reject(new ApiError('Время ожидания истекло. Проверьте историю перед повторной отправкой.'));};
+    xhr.onabort = () => {cleanup();logFailure();reject(new DOMException('Aborted', 'AbortError'));};
     signal?.addEventListener('abort', abort, {once:true});
     xhr.send(form);
   });

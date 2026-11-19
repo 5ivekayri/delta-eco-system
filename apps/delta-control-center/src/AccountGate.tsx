@@ -1,3 +1,4 @@
+import {clearRequestLog} from './requestLog';
 import React,{useState,useEffect} from 'react';
 type User={username:string;role:string};
 async function auth(path:string,body?:object){
@@ -7,8 +8,8 @@ async function auth(path:string,body?:object){
 export function AccountGate({children}:{children:React.ReactNode}){
  const [user,setUser]=useState<User|null>(null),[loading,setLoading]=useState(true),[register,setRegister]=useState(false),[busy,setBusy]=useState(false);
  const [username,setUsername]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState(''),[show,setShow]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
- useEffect(()=>{let live=true;auth('me').then(u=>{if(live)setUser(u)}).catch(()=>{}).finally(()=>{if(live)setLoading(false)});const expired=()=>{setUser(null);setNotice('Сессия завершилась. Войдите снова.');};window.addEventListener('delta-session-expired',expired);return()=>{live=false;window.removeEventListener('delta-session-expired',expired)}},[]);
- async function logout(){setBusy(true);try{await auth('logout',{});setUser(null);setPassword('');sessionStorage.removeItem('delta-token')}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
+ useEffect(()=>{let live=true;auth('me').then(u=>{if(live)setUser(u)}).catch(()=>{}).finally(()=>{if(live)setLoading(false)});const expired=()=>{clearRequestLog();setUser(null);setNotice('Сессия завершилась. Войдите снова.');};window.addEventListener('delta-session-expired',expired);return()=>{live=false;window.removeEventListener('delta-session-expired',expired)}},[]);
+ async function logout(){setBusy(true);try{await auth('logout',{});clearRequestLog();setUser(null);setPassword('');sessionStorage.removeItem('delta-token')}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
  async function submit(e:React.FormEvent){e.preventDefault();setError('');setNotice('');if(register&&password!==confirm){setError('Пароли не совпадают.');return}setBusy(true);try{if(register){await auth('register',{username,password});setRegister(false);setPassword('');setConfirm('');setNotice('Аккаунт создан. Теперь войдите.')}else{setUser(await auth('login',{username,password}));setPassword('');sessionStorage.removeItem('delta-token')}}catch(e){setError(e instanceof TypeError?'Нет связи с сервером. Проверьте сеть и повторите.':(e as Error).message)}finally{setBusy(false)}}
  if(loading)return <div className="auth-screen"><p role="status">Подключаемся к Delta…</p></div>;
  if(user)return <><div className="account-bar"><span>{user.username} · {user.role==='admin'?'Администратор':'Ожидает доступа'}</span><button disabled={busy} onClick={logout}>Выйти</button></div>{error&&<p className="error" role="alert">{error}</p>}{user.role==='admin'?children:<div className="auth-screen"><article className="auth-card"><div className="auth-logo">Δ</div><h1>Добро пожаловать, {user.username}</h1><p>Аккаунт создан. Доступ к устройствам и рабочему пространству ещё не настроен.</p><p>Администратор сообщит, когда вы сможете начать работу.</p></article></div>}</>;
