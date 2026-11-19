@@ -8,6 +8,9 @@ class Workspace(Record, Base):
     __tablename__='workspaces'
     name: Mapped[str] = mapped_column(String(200), unique=True)
     description: Mapped[str] = mapped_column(Text, default='')
+    storage_mode: Mapped[str] = mapped_column(String(16), default='cloud', server_default='cloud')
+    work_type: Mapped[str] = mapped_column(String(16), default='general', server_default='general')
+    storage_device_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class WorkspaceDeviceBinding(Record, Base):

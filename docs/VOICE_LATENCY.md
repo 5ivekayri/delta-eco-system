@@ -153,3 +153,113 @@ docker compose restart delta-core
 
 References: [faster-whisper](https://github.com/SYSTRAN/faster-whisper),
 [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection).
+
+## Nobara live measurement and latency fixes — 2026-11-07
+
+Raw results: [latency-2026-11-07.json](../benchmarks/latency-2026-11-07.json).
+Three sequential requests per case, through the local Vite gateway. CPU Ryzen 5
+4600H; Whisper small/int8, Piper Irina, existing OpenRouter model
+`nvidia/nemotron-3.5-lightning:free`. Voice input was synthetic Piper audio,
+not the user's microphone. Conversation history was not reset between samples.
+These small samples are not tail-latency guarantees.
+
+| Request | Before median, ms | After median, ms |
+|---|---:|---:|
+| Text: list devices | 36.53 | 52.95 |
+| Text: list tasks | 28.01 | 26.75 |
+| Text: list services | 3061.25 | 22.95 |
+| Short general conversation | 2785.81 | 2730.33 |
+| Voice: list devices, including Piper response | 2845.87 | 1845.05 |
+
+All 30 measured requests returned HTTP 200. Small local-command timing variation
+is retained in the table rather than presented as a speedup. List-services requests
+previously made two model calls while the actual tool took about 0.1 ms. Exact,
+unqualified service/workspace list requests now use registry-validated local
+routing and factual formatting; qualified/compound requests still use the LLM.
+
+Whisper used a hardcoded two CPU threads. A separate identical-audio probe measured
+median transcription times of 2521.57 / 1671.97 / 1586.54 ms at 2 / 4 / 6 threads.
+Four threads were selected locally to leave capacity for the other services.
+The live voice comparison reduced median STT from 2548.04 to 1594.68 ms, keeping
+the same model and recognized command. The separate probe's older audio fixture
+was misrecognized identically at each thread count; this is not a broad accuracy
+validation. Default thread count remains two for other machines.
+
+External-model latency still varies (after-change conversation: 1.96–4.83 s).
+Old local logs contained a text response up to 18.43 s, but had no stage timings
+for that historical request, so its exact cause cannot be assigned retrospectively.
+No live minute-long timeout was reproduced in this batch. Previously, the 60 s
+httpx inactivity timeout reset on chunks, each retry got its own timeout, and up
+to four model turns could accumulate. New configurable wall-clock deadlines are
+20 s per router completion, 30 s per assistant completion (including retry), and
+45 s cumulatively across LLM calls in one assistant request. These bound LLM
+waiting, not STT/tool/database execution. They return an honest timeout or preserve
+already-completed tool results; they do not fabricate a successful model answer.
+Cancellation and no replay after a completed action are covered by delayed-provider
+tests, including an overload followed by a hanging retry.
+
+Text and voice responses/errors now expose stage timing; text client timing is
+also shown in Developer mode. `context_ms` measures history/environment DB reads,
+`persistence_ms` measures durable interaction writes. Core logs emit
+`assistant_timing` / `voice_timing` with the HTTP `X-Request-ID`, and `llm_timing`
+with role, duration and outcome. New timing logs contain no prompts, audio or secrets.
+Historical chat entries still do not persist timing snapshots.
+
+Reproduce read-only probes (requests are recorded in chat history):
+
+```sh
+.venv/bin/python scripts/benchmark_latency.py --runs 3 \
+  --session-file /path/to/private-web-session-token \
+  --output .runtime/latency.json
+# Optional: --audio path/to/harmless-command.wav
+```
+
+With accounts disabled, omit `--session-file` to use `.env` DELTA_TOKEN.
+The session file must contain an existing web session, not an Agent session.
+Do not commit it. The probe never prints credentials or response text.
+
+Validation after the changes: 224 backend tests, 6 frontend tests, TypeScript/Vite
+build and Python sdist/wheel build passed. Restarted the native services and
+verified Core/Tasks health, a locally routed request via the authenticated desktop
+API, and matching X-Request-ID in the stage log. Existing unrelated worktree
+changes were preserved.
+
+## Request diagnostics and Delta identity — 2026-11-18
+
+Assistant and Settings now expose **Журнал запросов LLM**. This is an opt-in,
+per-browser-tab switch, saved in sessionStorage. It adds `X-Delta-LLM-Log: 1`
+to new text and voice requests. The response `timings.llm_requests` contains
+provider (`openrouter`, `local`, `mock`, or `bridge_unknown`), actual model when
+available, role, duration, outcome, attempt count and bridge fallback flag.
+An empty list means no LLM call; missing metadata means unavailable, not local.
+Core scopes collection with ContextVar and resets it on request completion.
+No prompts, responses, credentials or raw provider errors are added to this log.
+Existing server timing/activity logs continue independently; when diagnostics are
+on, assistant/voice timing records also include inference metadata in the server log.
+
+The UI keeps the latest 50 request entries in memory, with HTTP status and total
+client time. Disabling stops new entries but leaves existing entries readable.
+Clear, reload, logout or session expiration removes the browser log. Reload keeps
+the switch setting for that tab. This journal covers Assistant text/voice requests;
+it is not a global log of all document, screen-vision or Studio API requests.
+
+The loopback bridge returns request-specific `_delta_route` metadata with the
+actual successful backend/model. Core never infers the backend from the bridge's
+shared last_backend status. An older bridge or a failed bridge request without
+routing metadata is explicitly shown as unknown. Direct OpenRouter calls report
+the returned model, falling back to the requested model if the response omits it.
+A bridge fallback flag marks a cloud attempt followed by local inference; elapsed
+time includes that attempt. Individual internal bridge attempts are not listed.
+
+Common direct questions about Delta's model or creator are answered deterministically:
+`Извините не могу ответить на данный вопрос.` No tools or LLM are invoked for
+these matches. The same rule is in the system instruction for other formulations.
+General questions about models and their use are not categorically refused.
+
+Validation: 273 Core/repository tests, 9 bridge tests and 7 frontend tests passed;
+TypeScript and production build passed. Browser smoke against isolated API fixtures
+confirmed enabling, displaying model/provider and disabling without new entries.
+Real running Core returned the fixed reply in 35.76 ms and 11.11 ms (on/off);
+an ordinary request returned OpenRouter inference metadata in 5964.63 ms total
+(5929.85 ms inference). These are single samples, not a benchmark distribution.
+Local fallback was tested with mocks; no real local model was loaded for this check.

@@ -19,11 +19,15 @@ class Settings(BaseSettings):
     delta_router_model: str = ""
     delta_assistant_model: str = ""
     delta_router_max_tokens: int = Field(default=512, ge=128, le=4096)
+    delta_router_timeout_seconds: float = Field(default=20, gt=0, le=120)
+    delta_assistant_timeout_seconds: float = Field(default=30, gt=0, le=180)
+    delta_llm_budget_seconds: float = Field(default=45, gt=0, le=300)
     delta_local_intent_threshold: float = Field(default=.9, gt=0, le=1)
     stt_provider: str = "whisper"
     whisper_model: str = "small"
     whisper_cache_dir: str = ".runtime/whisper"
     whisper_language: str | None = "ru"
+    whisper_cpu_threads: int = Field(default=2, ge=1, le=32)
     voice_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1024, le=25 * 1024 * 1024)
     voice_max_seconds: int = Field(default=60, ge=1, le=120)
     mock_stt_transcript: str = "покажи устройства"

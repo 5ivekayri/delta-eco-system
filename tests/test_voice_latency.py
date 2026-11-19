@@ -228,3 +228,55 @@ async def test_activity_is_sent_after_http_response_body(app):
         response = await client.post('/api/v1/assistant/voice',files={'audio':('a.wav',b'fake','audio/wav')})
     assert response.status_code == 200
     assert events.index('response_sent') < events.index('activity')
+
+
+@pytest.mark.parametrize('phrase,tool', [('покажи сервисы','services.list'),('покажи рабочие пространства','workspaces.list')])
+def test_read_lists_skip_llm_and_expose_text_timings(app, phrase, tool):
+    forbidden=AsyncMock(side_effect=AssertionError('Simple list must not call an LLM'))
+    app.state.assistant.provider.respond=forbidden
+    app.state.assistant.router.respond=forbidden
+    with TestClient(app,headers={'Authorization':'Bearer test-token-only-123456'}) as client:
+        response=client.post('/api/v1/assistant/message',json={'message':phrase})
+    assert response.status_code==200
+    body=response.json()
+    assert body['tool_results'][0]['tool']==tool and body['tool_results'][0]['success']
+    assert body['timings']['router_calls']==body['timings']['response_generation_calls']==0
+    assert body['timings']['context_ms']>=0 and body['timings']['persistence_ms']>=0
+    forbidden.assert_not_called()
+
+
+async def test_total_llm_budget_preserves_completed_action_without_replay(app):
+    import asyncio
+    from time import perf_counter
+    handler=AsyncMock(return_value=[])
+    registry=ToolRegistry(app.state.services)
+    registry.register(LocalTool('devices.list','List',EmptyPayload,handler,[]))
+    calls=0
+    async def respond(*args):
+        nonlocal calls
+        calls+=1
+        if calls==1:
+            await asyncio.sleep(.05)
+            return LLMTurn(calls=[ToolCall(name='devices.list')])
+        await asyncio.sleep(10)
+    provider=SimpleNamespace(respond=respond)
+    service=AssistantService(app.state.engine,registry,provider,llm_budget_seconds=.12)
+    start=perf_counter()
+    result=await service.message('Покажи устройства и объясни их состояние')
+    assert perf_counter()-start < 1
+    assert 'фактические результаты' in result['assistant_text']
+    assert result['tool_results'][0]['success']
+    handler.assert_awaited_once()
+    assert calls==2
+
+
+def test_text_timeout_contains_stage_timings(app):
+    import asyncio
+    async def slow(*args):await asyncio.sleep(10)
+    app.state.assistant.local_router=None
+    app.state.assistant.router.respond=slow
+    app.state.assistant.llm_budget_seconds=.02
+    with TestClient(app,headers={'Authorization':'Bearer test-token-only-123456'}) as client:
+        response=client.post('/api/v1/assistant/message',json={'message':'Привет'})
+    assert response.status_code==503
+    assert response.json()['timings']['router_ms']>0

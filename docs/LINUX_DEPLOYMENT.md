@@ -1,5 +1,10 @@
 # Развёртывание Delta на Linux
 
+**Аккаунты:** перед первым пользовательским входом примените миграции и создайте
+администратора по [ACCOUNTS.md](ACCOUNTS.md). В текущем интерфейсе используется
+логин/пароль; упоминания development token ниже относятся к внутренним сервисам
+и старым CLI-сценариям, не к пользовательскому входу.
+
 Руководство соответствует Compose в репозитории на 2026-10-17. Целевая конфигурация:
 Linux x86_64, Docker Engine с Compose v2, Git; Python/Node на сервере для Docker-запуска
 не нужны. CPU-профиль проверялся в Linux-контейнерах на macOS, отдельная приёмка
@@ -101,6 +106,12 @@ provision, версия весов, тайм-ауты и измерения. Pip
 
 ## 5. Host Agent
 
+Для подключения пользовательских Mac/Windows/Linux теперь доступен отдельный
+[настольный Delta Agent](DESKTOP_AGENT.md) с окном настройки и треем. Его ставят
+на каждый управляемый компьютер; Agent на Linux-сервере не регистрирует Mac.
+Готовый клиент подключается к адресу gateway и не требует установки Docker/Python.
+CLI ниже остаётся доступен для разработки и ручного запуска.
+
 Agent запускается на компьютере, которым нужно управлять, в пользовательской
 графической сессии. Headless-сервер не заменяет Agent на рабочем Mac/Windows/Linux.
 На машине Agent установите Python 3.12+, uv и зависимости репозитория (`uv sync`).
@@ -138,3 +149,18 @@ services:
 Включите автозапуск Docker средствами вашей ОС. После reboot проверьте health и
 готовность голосов. Пример override не является уже установленным systemd-сервисом.
 Обновление, восстановление и диагностика: [OPERATIONS.md](OPERATIONS.md).
+
+### Desktop Assistant UI
+
+The desktop client uses the existing gateway `/core` for the scoped routes
+`GET /api/v1/desktop/devices` and `POST /api/v1/desktop/message`. No additional
+port, database or proxy is required. Update Core before installing the new client;
+with accounts enabled these routes require a valid admin Agent session.
+The local macOS client remains separate from the Linux server Agent.
+
+Desktop approval clients require updated Core and shared contracts before client
+installation (Registration.approval_timeout / CommandMessage.expires_at). No schema
+migration or extra port is needed. Core grants up to 60 seconds of approval time
+in addition to the usual action timeout. Keep client/server clocks synchronized.
+The server's noninteractive CLI Agent retains its existing explicit permissions;
+the desktop client's selected confirmation mode applies to that desktop only.

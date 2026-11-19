@@ -1,18 +1,25 @@
+import {addRequestLog, loggingEnabled, InferenceRequest} from './requestLog';
 export class ApiError extends Error {
   constructor(message: string, public transcript?: string, public timings?: VoiceTimings) {super(message);}
 }
 export interface Health { status: string; service: string; version: string }
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
-  const token = sessionStorage.getItem('delta-token');
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  headers.set('X-Delta-Request', '1');
   if (init?.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
-  const response = await fetch(path, {...init, headers});
+  const diagnostic = loggingEnabled() && path === '/core/api/v1/assistant/message';
+  if (diagnostic) headers.set('X-Delta-LLM-Log', '1');
+  const started = performance.now();
+  let response: Response;
+  try {response = await fetch(path, {...init, headers});}
+  catch (error) {if(diagnostic)addRequestLog('Текст',0,performance.now()-started);throw error;}
+  const body = await response.json().catch(() => ({}));
+  if(diagnostic)addRequestLog('Текст',response.status,performance.now()-started,body.timings?.llm_requests);
+  if (response.status === 401) window.dispatchEvent(new Event('delta-session-expired'));
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
     throw new ApiError(body.message || body.error_code || `HTTP ${response.status}`, body.transcript, body.timings);
   }
-  return response.json();
+  return body;
 }
 export const getHealth = () => request<Health>('/core/health');
 
@@ -30,22 +37,24 @@ export const sendCommand = (id: string, action: string, payload = {}) => request
 
 export interface Task {id:string;title:string;description:string;workspace_id:string|null;status:'todo'|'in_progress'|'done';priority:'low'|'medium'|'high';due_date:string|null;completed_at:string|null}
 export interface TaskInput {title:string;description?:string;workspace_id?:string|null;status?:Task['status'];priority?:Task['priority'];due_date?:string|null}
-export const getTasks=(filters:Record<string,string>={})=>request<Task[]>('/tasks-api/api/v1/tasks?'+new URLSearchParams(Object.entries(filters).filter(([,v])=>v)));
-export const createTask=(body:TaskInput)=>request<Task>('/tasks-api/api/v1/tasks',{method:'POST',body:JSON.stringify(body)});
-export const updateTask=(id:string,body:Partial<TaskInput>)=>request<Task>('/tasks-api/api/v1/tasks/'+id,{method:'PATCH',body:JSON.stringify(body)});
-export const deleteTask=(id:string)=>request<{success:boolean}>('/tasks-api/api/v1/tasks/'+id,{method:'DELETE'});
+export const getTasks=(filters:Record<string,string>={})=>request<Task[]>('/core/api/v1/task-proxy/tasks?'+new URLSearchParams(Object.entries(filters).filter(([,v])=>v)));
+export const createTask=(body:TaskInput)=>request<Task>('/core/api/v1/task-proxy/tasks',{method:'POST',body:JSON.stringify(body)});
+export const updateTask=(id:string,body:Partial<TaskInput>)=>request<Task>('/core/api/v1/task-proxy/tasks/'+id,{method:'PATCH',body:JSON.stringify(body)});
+export const deleteTask=(id:string)=>request<{success:boolean}>('/core/api/v1/task-proxy/tasks/'+id,{method:'DELETE'});
 export interface Service {service_id:string;name:string;version:string|null;base_url:string;status:string;enabled:boolean;last_health_check:string|null;available_tools:{name:string;description:string}[]}
 export const getServices=()=>request<Service[]>('/core/api/v1/services');
 
 export interface Binding {id:string;workspace_id:string;device_id:string;local_path:string;apps:string[];urls:string[]}
-export interface Workspace {id:string;name:string;description:string;bindings?:Binding[]}
+export interface Workspace {id:string;name:string;description:string;bindings?:Binding[];storage_mode:'cloud'|'local';work_type:'general'|'website'|'code'|'documents';storage_device_id?:string|null}
 export const getWorkspaces=()=>request<Workspace[]>('/core/api/v1/workspaces');
-export const saveWorkspace=(body:{name:string;description:string},id?:string)=>request<Workspace>('/core/api/v1/workspaces'+(id?'/'+id:''),{method:id?'PATCH':'POST',body:JSON.stringify(body)});
+export const saveWorkspace=(body:{name:string;description:string;storage_mode?:string;work_type?:string;storage_device_id?:string|null},id?:string)=>request<Workspace>('/core/api/v1/workspaces'+(id?'/'+id:''),{method:id?'PATCH':'POST',body:JSON.stringify(body)});
 export const deleteWorkspace=(id:string)=>request<{success:boolean}>('/core/api/v1/workspaces/'+id,{method:'DELETE'});
 export const saveBinding=(id:string,body:{device_id:string;local_path:string;apps:string[];urls:string[]})=>request<Binding>(`/core/api/v1/workspaces/${id}/bindings`,{method:'POST',body:JSON.stringify(body)});
 export const launchWorkspace=(id:string,device_id:string)=>request<CommandResult&{results:CommandResult[]}>(`/core/api/v1/workspaces/${id}/launch`,{method:'POST',body:JSON.stringify({device_id})});
 
 export interface VoiceTimings {
+  llm_requests?: InferenceRequest[];
+  context_ms?:number; persistence_ms?:number;
   route_source?:'local'|'llm'; local_router_ms?:number; confidence?:number;
   upload_ms:number; stt_ms:number; router_ms:number; tool_ms:number;
   response_generation_ms:number; tts_ms:number; server_total_ms:number;
@@ -56,7 +65,17 @@ export interface VoiceTimings {
 export interface AssistantResponse {tts_fallback_reason?:string;voice_id?:string;tts_mode?:'server'|'piper'|'system';route_source?:'local'|'llm'; local_router_ms?:number; confidence?:number; timings?:VoiceTimings; id:string;assistant_text:string;tool_calls:{name:string;arguments:Record<string,unknown>}[];tool_results:{tool:string;success:boolean;message:string;data:unknown;duration_ms:number;service_id:string}[];transcript?:string;audio_available?:boolean;audio_base64?:string;tts_error?:string;tts_message?:string;tts_provider?:string;audio_mime?:string}
 export interface Interaction extends AssistantResponse {user_message:string;created_at:string}
 export const getHistory=()=>request<Interaction[]>('/core/api/v1/assistant/history');
-export const sendMessage=(message:string,device_id?:string)=>request<AssistantResponse>('/core/api/v1/assistant/message',{method:'POST',body:JSON.stringify({message,device_id:device_id||null})});
+export const sendMessage=async(message:string,device_id?:string)=>{
+  const start=performance.now();
+  try {
+    const result=await request<AssistantResponse>('/core/api/v1/assistant/message',{method:'POST',body:JSON.stringify({message,device_id:device_id||null})});
+    if(result.timings) result.timings.total_ms=performance.now()-start;
+    return result;
+  } catch(error) {
+    if(error instanceof ApiError && error.timings) error.timings.total_ms=performance.now()-start;
+    throw error;
+  }
+};
 
 export interface VoiceConfig {provider: 'whisper'|'mock'; max_seconds: number; max_bytes: number; neural_ready?:boolean; voices?:{id:string;name:string;kind:string}[]}
 export const getVoiceConfig = () => request<VoiceConfig>('/core/api/v1/assistant/voice/config');
@@ -77,8 +96,10 @@ export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, r
     const cleanup = () => signal?.removeEventListener('abort', abort);
     if (signal?.aborted) {reject(new DOMException('Aborted', 'AbortError')); return;}
     xhr.open('POST', '/core/api/v1/assistant/voice');
-    const token = sessionStorage.getItem('delta-token');
-    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.setRequestHeader('X-Delta-Request', '1');
+    const diagnostic = loggingEnabled();
+    if(diagnostic)xhr.setRequestHeader('X-Delta-LLM-Log', '1');
+    const logFailure = () => {if(diagnostic)addRequestLog('Голос',0,performance.now()-started);};
     xhr.timeout = 180000;
     xhr.upload.onload = () => {uploadMs = performance.now() - started;};
     xhr.onload = () => {
@@ -88,13 +109,14 @@ export const sendVoice = (audio: Blob, deviceId: string, signal?: AbortSignal, r
         if (body.timings) body.timings = {...body.timings,
           client_upload_ms: uploadMs, finalization_ms: started - recordingEndedAt,
           total_ms: performance.now() - recordingEndedAt};
+        if(diagnostic)addRequestLog('Голос',xhr.status,performance.now()-started,body.timings?.llm_requests);
         if (xhr.status >= 200 && xhr.status < 300) resolve(body);
         else reject(new ApiError(body.message || body.error_code || `HTTP ${xhr.status}`, body.transcript, body.timings));
-      } catch {reject(new ApiError(`HTTP ${xhr.status}: некорректный ответ сервера`));}
+      } catch {logFailure();reject(new ApiError(`HTTP ${xhr.status}: некорректный ответ сервера`));}
     };
-    xhr.onerror = () => {cleanup();reject(new ApiError('Сеть недоступна. Проверьте историю перед повторной отправкой.'));};
-    xhr.ontimeout = () => {cleanup();reject(new ApiError('Время ожидания истекло. Проверьте историю перед повторной отправкой.'));};
-    xhr.onabort = () => {cleanup();reject(new DOMException('Aborted', 'AbortError'));};
+    xhr.onerror = () => {cleanup();logFailure();reject(new ApiError('Сеть недоступна. Проверьте историю перед повторной отправкой.'));};
+    xhr.ontimeout = () => {cleanup();logFailure();reject(new ApiError('Время ожидания истекло. Проверьте историю перед повторной отправкой.'));};
+    xhr.onabort = () => {cleanup();logFailure();reject(new DOMException('Aborted', 'AbortError'));};
     signal?.addEventListener('abort', abort, {once:true});
     xhr.send(form);
   });

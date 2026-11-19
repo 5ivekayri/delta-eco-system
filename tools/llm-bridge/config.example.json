@@ -1,0 +1,17 @@
+{
+  "mode": "auto",
+  "server_env": "../../.env",
+  "binary": "runtime/llama-b12189/llama-server",
+  "model_file": "models/Qwen3-1.7B-Q4_K_M.gguf",
+  "local_port": 8093,
+  "cloud_timeout": 8,
+  "startup_timeout": 45,
+  "local_timeout": 45,
+  "cooldown": 30,
+  "idle_seconds": 120,
+  "core_health": "http://127.0.0.1:8000/health",
+  "device": "Vulkan1",
+  "fallback_timeout": 60,
+  "vision_model": "nvidia/nemotron-3.5-super-vl:free",
+  "vision_timeout": 45
+}

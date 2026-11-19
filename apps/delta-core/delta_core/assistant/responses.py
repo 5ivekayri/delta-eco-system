@@ -10,7 +10,7 @@ def is_simple_action(message: str) -> bool:
     text = message.strip().casefold()
     if len(text) > 600 or re.search(
         r'объясн|почему|зачем|сравн|проанализ|суммир|резюм|подведи|оцен[ик]|порекоменд|'
-        r'посовет|затем|потом|после этого|если|сводк|итог|вывод|\bи\b|'
+        r'посовет|затем|потом|после этого|если|сводк|итог|вывод|лендинг|html|программир|\bи\b|'
         r'\b(why|explain|compare|analy[sz]e|summari[sz]e|recommend|then|if|and)\b', text
     ):
         return False
@@ -27,6 +27,25 @@ def deterministic_response(result: dict) -> str | None:
     if not result.get('success'):
         return None
     tool, data = result.get('tool'), result.get('data')
+    if tool in {'devices.open_app','devices.close_app','devices.minimize_app'} and isinstance(data, dict) and data.get('success') is True and data.get('app_name') and data.get('device_name'):
+        return data['message']
+    if tool == 'devices.describe_screen' and isinstance(data, dict) and data.get('description'):
+        return data['description']
+    if tool == 'devices.list_apps' and isinstance(data, list):
+        sections = []
+        for device in data:
+            apps = device.get('applications', [])
+            sections.append(f"{device.get('device_name', 'Компьютер')} — доступно программ: {len(apps)}\n" +
+                            '\n'.join('• ' + item['name'] for item in apps))
+        return '\n\n'.join(sections) or 'Доступных приложений нет.'
+    if tool == 'services.list' and isinstance(data, list) and all(
+        isinstance(item, dict) and isinstance(item.get('name'), str) and isinstance(item.get('status'), str) for item in data
+    ):
+        return '\n'.join('• ' + item['name'] + ' — ' + item['status'] for item in data) or 'Сервисы не найдены.'
+    if tool == 'workspaces.list' and isinstance(data, list) and all(
+        isinstance(item, dict) and isinstance(item.get('name'), str) for item in data
+    ):
+        return '\n'.join('• ' + item['name'] for item in data) or 'Рабочие пространства не найдены.'
     if tool in {'tasks.create', 'tasks.complete'} and isinstance(data, dict) and isinstance(data.get('title'), str):
         if tool == 'tasks.create':
             return 'Задача добавлена: ' + data['title']
@@ -36,6 +55,10 @@ def deterministic_response(result: dict) -> str | None:
         return 'Задача удалена.'
     if tool == 'tasks.update' and isinstance(data, dict) and isinstance(data.get('title'), str):
         return 'Задача обновлена: ' + data['title'] + (' · приоритет: ' + {'high':'высокий','medium':'средний','low':'низкий'}.get(data.get('priority'), str(data.get('priority'))) if data.get('priority') else '')
+    if tool == 'workspaces.create' and isinstance(data, dict) and data.get('id') and isinstance(data.get('name'), str):
+        return 'Рабочее пространство создано: ' + data['name'] + (
+            '. Настройки устройства сохранены.' if data.get('bindings') else
+            '. Для запуска добавьте привязку к устройству в разделе Workspaces.')
     if tool == 'devices.list' and isinstance(data, list) and all(
         isinstance(d, dict) and isinstance(d.get('display_name'), str) and d.get('status') in {'online', 'offline'} for d in data
     ):
@@ -66,6 +89,15 @@ def deterministic_response(result: dict) -> str | None:
 
 def requested_action(message: str) -> str | None:
     text = message.strip().casefold()
+    text = re.sub(r'^(?:пожалуйста|please)[, ]+', '', text)
+    if re.match(r'^(?:сверни|свернуть|minimize)\b', text):
+        return 'devices.minimize_app'
+    if re.match(r'^(?:закрой|закрыть|close)\b', text) and not re.search(r'\b(задач\w*|task)\b', text):
+        return 'devices.close_app'
+    if re.match(r'^(?:создай|создать|добавь|добавить|create|add)\s+(?:(?:новое|новый|a|new)\s+)*(?:рабочее пространство|пространство|воркспейс|workspace)\b', text):
+        return 'workspaces.create'
+    if re.match(r'^(?:выполни|выполнить|execute|run)\s+(?:команду|команд[уы]|command)\b', text):
+        return 'devices.run_command'
     required = None
     for pattern, name in [
         (r'^(?:добавь|создай|добавить|создать)\b', 'tasks.create'),
@@ -83,6 +115,8 @@ def requested_action(message: str) -> str | None:
 
 def action_is_fulfilled(message: str, results: list[dict]) -> bool:
     required = requested_action(message)
+    if required == 'workspaces.launch' and not re.search(r'\b(пространство|workspace)\b', message, re.I):
+        return any(r.get('tool') in {'workspaces.launch','devices.open_app'} for r in results)
     return required is None or any(r.get('tool') == required for r in results)
 
 

@@ -1,6 +1,7 @@
 import json
 import re
 from .base import LLMProvider,LLMTurn
+from .telemetry import record
 from delta_contracts.tools import ToolCall
 
 
@@ -8,6 +9,8 @@ def describe_result(result:dict)->str:
     if not result['success']:
         return 'Не удалось выполнить действие: '+result.get('message','ошибка')
     data=result.get('data');tool=result.get('tool','')
+    if tool=='workspaces.create':
+        return 'Рабочее пространство создано: '+data['name']
     if tool=='tasks.create':
         return 'Задача добавлена: '+data['title']
     if tool=='devices.list':
@@ -22,6 +25,7 @@ def describe_result(result:dict)->str:
 
 class MockLLMProvider(LLMProvider):
     async def respond(self,messages,tools,context):
+        record(provider="mock", model="mock", role="assistant", duration_ms=0, outcome="ok")
         if messages[-1]['role']=='tool':
             current = max((i for i, m in enumerate(messages) if m['role'] == 'user'), default=-1)
             results=[json.loads(m['content']) for m in messages[current + 1:] if m['role']=='tool']
@@ -30,7 +34,13 @@ class MockLLMProvider(LLMProvider):
         workspace=next((w for w in context.get('workspaces',[]) if w['name'].casefold() in lower or
                         ('диплом' in lower and w['name']=='Master Thesis')),None)
         name=None;arguments={}
-        if any(word in lower for word in ['устройств','компьютер','devices']) and not any(word in lower for word in ['открой','open ']):
+        creation = re.fullmatch(r'(?:пожалуйста[, ]+)?(?:создай|создать|добавь|create|add)\s+(?:(?:новое|новый|a|new)\s+)*(?:рабочее пространство|пространство|воркспейс|workspace)(?:\s+(.+))?[.!]?', message.strip(), re.I)
+        if creation:
+            title = (creation[1] or '').strip(' .!«»"')
+            if not title:
+                return LLMTurn(text='Как назвать рабочее пространство?')
+            name='workspaces.create';arguments={'name': title}
+        elif any(word in lower for word in ['устройств','компьютер','devices']) and not any(word in lower for word in ['открой','open ']):
             name='devices.list'
         elif 'сервис' in lower or 'services' in lower:
             name='services.list'

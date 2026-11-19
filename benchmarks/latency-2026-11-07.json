@@ -1,0 +1,924 @@
+{
+  "date": "2026-11-07",
+  "samples_per_case": 3,
+  "environment": "Nobara Linux; Ryzen 5 4600H; Whisper small CPU int8; Piper Irina; OpenRouter nvidia/nemotron-3.5-lightning:free",
+  "limitations": "Sequential loopback HTTP through Vite gateway; synthetic Piper audio; no microphone/recording time; conversation history evolves between samples; small sample, not p95/SLA.",
+  "before": [
+    {
+      "kind": "text",
+      "case": "покажи устройства",
+      "run": 1,
+      "status": 200,
+      "client_ms": 106.7,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 0.0,
+        "local_router_ms": 9.35,
+        "tool_ms": 2.73,
+        "response_generation_ms": 0.03,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 44.18,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи устройства",
+      "run": 2,
+      "status": 200,
+      "client_ms": 36.53,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 0.0,
+        "local_router_ms": 2.23,
+        "tool_ms": 1.51,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 15.47,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи устройства",
+      "run": 3,
+      "status": 200,
+      "client_ms": 26.28,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 0.0,
+        "local_router_ms": 2.09,
+        "tool_ms": 1.34,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 15.93,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи задачи",
+      "run": 1,
+      "status": 200,
+      "client_ms": 39.95,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 0.0,
+        "local_router_ms": 2.85,
+        "tool_ms": 16.73,
+        "response_generation_ms": 0.07,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 31.45,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "tasks.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи задачи",
+      "run": 2,
+      "status": 200,
+      "client_ms": 28.01,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 0.0,
+        "local_router_ms": 2.27,
+        "tool_ms": 4.43,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 18.87,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "tasks.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи задачи",
+      "run": 3,
+      "status": 200,
+      "client_ms": 25.68,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 0.0,
+        "local_router_ms": 2.13,
+        "tool_ms": 3.67,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 17.86,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "tasks.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи сервисы",
+      "run": 1,
+      "status": 200,
+      "client_ms": 3080.11,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 1239.91,
+        "local_router_ms": 2.87,
+        "tool_ms": 0.13,
+        "response_generation_ms": 1802.28,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 3069.51,
+        "router_calls": 1,
+        "response_generation_calls": 1,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "services.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи сервисы",
+      "run": 2,
+      "status": 200,
+      "client_ms": 3061.25,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 739.87,
+        "local_router_ms": 5.61,
+        "tool_ms": 0.12,
+        "response_generation_ms": 2277.62,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 3046.82,
+        "router_calls": 1,
+        "response_generation_calls": 1,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "services.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи сервисы",
+      "run": 3,
+      "status": 200,
+      "client_ms": 2476.47,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 904.97,
+        "local_router_ms": 3.94,
+        "tool_ms": 0.13,
+        "response_generation_ms": 1533.19,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 2464.5,
+        "router_calls": 1,
+        "response_generation_calls": 1,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "services.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "Привет. Ответь одним коротким предложением, чем ты можешь помочь.",
+      "run": 1,
+      "status": 200,
+      "client_ms": 1541.09,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 1495.53,
+        "local_router_ms": 5.6,
+        "tool_ms": 0.0,
+        "response_generation_ms": 0.0,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 1527.71,
+        "router_calls": 1,
+        "response_generation_calls": 0,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": []
+    },
+    {
+      "kind": "text",
+      "case": "Привет. Ответь одним коротким предложением, чем ты можешь помочь.",
+      "run": 2,
+      "status": 200,
+      "client_ms": 2785.81,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 2741.99,
+        "local_router_ms": 4.8,
+        "tool_ms": 0.0,
+        "response_generation_ms": 0.0,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 2772.77,
+        "router_calls": 1,
+        "response_generation_calls": 0,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": []
+    },
+    {
+      "kind": "text",
+      "case": "Привет. Ответь одним коротким предложением, чем ты можешь помочь.",
+      "run": 3,
+      "status": 200,
+      "client_ms": 2922.18,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "router_ms": 2886.66,
+        "local_router_ms": 2.0,
+        "tool_ms": 0.0,
+        "response_generation_ms": 0.0,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 2911.72,
+        "router_calls": 1,
+        "response_generation_calls": 0,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": []
+    },
+    {
+      "kind": "voice",
+      "case": "покажи устройства",
+      "run": 1,
+      "status": 200,
+      "client_ms": 3027.62,
+      "timings": {
+        "upload_ms": 0.02,
+        "stt_ms": 2678.29,
+        "router_ms": 0.0,
+        "local_router_ms": 4.71,
+        "tool_ms": 2.81,
+        "response_generation_ms": 0.02,
+        "tts_ms": 300.58,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 3015.59,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "ok"
+      },
+      "error": null,
+      "transcript": "Покажи устройство.",
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "voice",
+      "case": "покажи устройства",
+      "run": 2,
+      "status": 200,
+      "client_ms": 2819.21,
+      "timings": {
+        "upload_ms": 0.02,
+        "stt_ms": 2541.27,
+        "router_ms": 0.0,
+        "local_router_ms": 4.78,
+        "tool_ms": 2.28,
+        "response_generation_ms": 0.02,
+        "tts_ms": 229.69,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 2807.75,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "ok"
+      },
+      "error": null,
+      "transcript": "Покажи устройство.",
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "voice",
+      "case": "покажи устройства",
+      "run": 3,
+      "status": 200,
+      "client_ms": 2845.87,
+      "timings": {
+        "upload_ms": 0.01,
+        "stt_ms": 2548.04,
+        "router_ms": 0.0,
+        "local_router_ms": 4.9,
+        "tool_ms": 2.34,
+        "response_generation_ms": 0.01,
+        "tts_ms": 254.84,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 2835.24,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "ok"
+      },
+      "error": null,
+      "transcript": "Покажи устройство.",
+      "tools": [
+        "devices.list"
+      ]
+    }
+  ],
+  "after": [
+    {
+      "kind": "text",
+      "case": "покажи устройства",
+      "run": 1,
+      "status": 200,
+      "client_ms": 61.57,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 9.36,
+        "persistence_ms": 10.03,
+        "router_ms": 0.0,
+        "local_router_ms": 3.69,
+        "tool_ms": 1.92,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 26.38,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи устройства",
+      "run": 2,
+      "status": 200,
+      "client_ms": 52.95,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 6.06,
+        "persistence_ms": 9.51,
+        "router_ms": 0.0,
+        "local_router_ms": 5.47,
+        "tool_ms": 2.23,
+        "response_generation_ms": 0.02,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 23.69,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи устройства",
+      "run": 3,
+      "status": 200,
+      "client_ms": 24.06,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 3.47,
+        "persistence_ms": 8.56,
+        "router_ms": 0.0,
+        "local_router_ms": 2.14,
+        "tool_ms": 1.11,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 15.5,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи задачи",
+      "run": 1,
+      "status": 200,
+      "client_ms": 35.75,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 3.05,
+        "persistence_ms": 8.48,
+        "router_ms": 0.0,
+        "local_router_ms": 2.46,
+        "tool_ms": 12.79,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 27.02,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "tasks.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи задачи",
+      "run": 2,
+      "status": 200,
+      "client_ms": 26.75,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 3.55,
+        "persistence_ms": 8.39,
+        "router_ms": 0.0,
+        "local_router_ms": 1.97,
+        "tool_ms": 4.77,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 18.88,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "tasks.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи задачи",
+      "run": 3,
+      "status": 200,
+      "client_ms": 25.27,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 2.93,
+        "persistence_ms": 7.99,
+        "router_ms": 0.0,
+        "local_router_ms": 1.98,
+        "tool_ms": 4.47,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 17.57,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "tasks.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи сервисы",
+      "run": 1,
+      "status": 200,
+      "client_ms": 23.17,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 3.22,
+        "persistence_ms": 8.05,
+        "router_ms": 0.0,
+        "local_router_ms": 2.01,
+        "tool_ms": 0.06,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 13.64,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "services.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи сервисы",
+      "run": 2,
+      "status": 200,
+      "client_ms": 22.66,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 3.29,
+        "persistence_ms": 8.76,
+        "router_ms": 0.0,
+        "local_router_ms": 2.02,
+        "tool_ms": 0.06,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 14.39,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "services.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "покажи сервисы",
+      "run": 3,
+      "status": 200,
+      "client_ms": 22.95,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 3.82,
+        "persistence_ms": 8.79,
+        "router_ms": 0.0,
+        "local_router_ms": 2.06,
+        "tool_ms": 0.06,
+        "response_generation_ms": 0.01,
+        "tts_ms": 0.0,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 14.98,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": [
+        "services.list"
+      ]
+    },
+    {
+      "kind": "text",
+      "case": "Привет. Ответь одним коротким предложением, чем ты можешь помочь.",
+      "run": 1,
+      "status": 200,
+      "client_ms": 2730.33,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 3.46,
+        "persistence_ms": 32.04,
+        "router_ms": 2683.11,
+        "local_router_ms": 2.79,
+        "tool_ms": 0.0,
+        "response_generation_ms": 0.0,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 2721.62,
+        "router_calls": 1,
+        "response_generation_calls": 0,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": []
+    },
+    {
+      "kind": "text",
+      "case": "Привет. Ответь одним коротким предложением, чем ты можешь помочь.",
+      "run": 2,
+      "status": 200,
+      "client_ms": 1962.0,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 8.85,
+        "persistence_ms": 35.23,
+        "router_ms": 1897.34,
+        "local_router_ms": 5.57,
+        "tool_ms": 0.0,
+        "response_generation_ms": 0.0,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 1947.32,
+        "router_calls": 1,
+        "response_generation_calls": 0,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": []
+    },
+    {
+      "kind": "text",
+      "case": "Привет. Ответь одним коротким предложением, чем ты можешь помочь.",
+      "run": 3,
+      "status": 200,
+      "client_ms": 4829.85,
+      "timings": {
+        "upload_ms": 0.0,
+        "stt_ms": 0.0,
+        "context_ms": 5.6,
+        "persistence_ms": 17.23,
+        "router_ms": 4790.42,
+        "local_router_ms": 4.29,
+        "tool_ms": 0.0,
+        "response_generation_ms": 0.0,
+        "tts_ms": 0.0,
+        "route_source": "llm",
+        "confidence": 0.0,
+        "server_total_ms": 4817.8,
+        "router_calls": 1,
+        "response_generation_calls": 0,
+        "execution_path": "smart",
+        "tts_status": "not_configured"
+      },
+      "error": null,
+      "transcript": null,
+      "tools": []
+    },
+    {
+      "kind": "voice",
+      "case": "покажи устройства",
+      "run": 1,
+      "status": 200,
+      "client_ms": 1998.65,
+      "timings": {
+        "upload_ms": 0.27,
+        "stt_ms": 1639.58,
+        "context_ms": 5.26,
+        "persistence_ms": 35.02,
+        "router_ms": 0.0,
+        "local_router_ms": 4.85,
+        "tool_ms": 2.21,
+        "response_generation_ms": 0.02,
+        "tts_ms": 294.67,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 1987.48,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "ok"
+      },
+      "error": null,
+      "transcript": "Покажи устройство.",
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "voice",
+      "case": "покажи устройства",
+      "run": 2,
+      "status": 200,
+      "client_ms": 1845.05,
+      "timings": {
+        "upload_ms": 0.02,
+        "stt_ms": 1576.93,
+        "context_ms": 3.33,
+        "persistence_ms": 16.44,
+        "router_ms": 0.0,
+        "local_router_ms": 4.8,
+        "tool_ms": 2.59,
+        "response_generation_ms": 0.01,
+        "tts_ms": 224.99,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 1832.98,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "ok"
+      },
+      "error": null,
+      "transcript": "Покажи устройство.",
+      "tools": [
+        "devices.list"
+      ]
+    },
+    {
+      "kind": "voice",
+      "case": "покажи устройства",
+      "run": 3,
+      "status": 200,
+      "client_ms": 1837.45,
+      "timings": {
+        "upload_ms": 0.01,
+        "stt_ms": 1594.68,
+        "context_ms": 2.94,
+        "persistence_ms": 16.07,
+        "router_ms": 0.0,
+        "local_router_ms": 2.65,
+        "tool_ms": 1.34,
+        "response_generation_ms": 0.01,
+        "tts_ms": 204.2,
+        "route_source": "local",
+        "confidence": 0.99,
+        "server_total_ms": 1825.78,
+        "router_calls": 0,
+        "response_generation_calls": 0,
+        "execution_path": "fast",
+        "tts_status": "ok"
+      },
+      "error": null,
+      "transcript": "Покажи устройство.",
+      "tools": [
+        "devices.list"
+      ]
+    }
+  ],
+  "stt_thread_probe": [
+    {
+      "threads": 2,
+      "run": 1,
+      "ms": 2686.51,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 2,
+      "run": 2,
+      "ms": 2508.56,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 2,
+      "run": 3,
+      "ms": 2521.57,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 4,
+      "run": 1,
+      "ms": 1688.52,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 4,
+      "run": 2,
+      "ms": 1671.97,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 4,
+      "run": 3,
+      "ms": 1629.74,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 6,
+      "run": 1,
+      "ms": 2056.42,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 6,
+      "run": 2,
+      "ms": 1586.54,
+      "transcript": " Покажи его устройство."
+    },
+    {
+      "threads": 6,
+      "run": 3,
+      "ms": 1573.63,
+      "transcript": " Покажи его устройство."
+    }
+  ]
+}

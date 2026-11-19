@@ -84,3 +84,7 @@ docker compose up --build -d
 `docker compose ps`, `docker compose logs --tail=100 SERVICE`, `docker stats --no-stream`
 помогают локализовать проблему. Перед передачей логов уберите ключи и личные данные.
 Не публикуйте вывод `docker compose config`: в нём могут быть раскрыты значения `.env`.
+
+DOCX: [Документы, версии и ИИ](DOCUMENTS.md).
+
+[Workspace Studio: код, документы, хранение и превью](WORKSPACE_STUDIO.md).

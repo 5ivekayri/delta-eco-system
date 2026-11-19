@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session
 from delta_contracts.devices import StrictModel
 from delta_contracts.storage import serialize
 from .models import Interaction
+from delta_core.voice.telemetry import VoiceTimings
+import logging
+import json
 
 router=APIRouter(prefix='/api/v1/assistant')
 
@@ -27,10 +30,14 @@ class MessageInput(StrictModel):
 
 @router.post('/message')
 async def message(body:MessageInput,request:Request,background_tasks:BackgroundTasks):
+    timings = VoiceTimings()
     try:
-        return await request.app.state.assistant.message(body.message,str(body.device_id) if body.device_id else None, background=background_tasks)
+        result = await request.app.state.assistant.message(body.message,str(body.device_id) if body.device_id else None, timings=timings, background=background_tasks)
+        return {**result, 'timings': timings.snapshot()}
     except DeltaError as error:
-        return JSONResponse({'success':False,'error_code':error.code,'message':error.message},status_code=error.status,background=background_tasks)
+        return JSONResponse({'success':False,'error_code':error.code,'message':error.message,'timings':timings.snapshot()},status_code=error.status,background=background_tasks)
+    finally:
+        logging.getLogger(__name__).info(json.dumps({'event':'assistant_timing', 'request_id':getattr(request.state,'request_id',None), **timings.snapshot()}))
 
 
 @router.get('/history')

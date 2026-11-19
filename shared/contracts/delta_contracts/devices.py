@@ -3,11 +3,17 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-Action = Literal["system_info", "open_url", "open_path", "open_app"]
+Action = Literal["system_info", "open_url", "open_path", "open_app", "close_app", "minimize_app", "capture_screen", "workspace_files", "search_files", "read_file", "run_command", "command_access"]
 
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class Application(StrictModel):
+    id: str = Field(min_length=1, max_length=128, pattern=r'^[A-Za-z0-9_.-]+$')
+    name: str = Field(min_length=1, max_length=255)
+    aliases: list[str] = Field(default_factory=list, max_length=20)
 
 
 class Registration(StrictModel):
@@ -19,7 +25,9 @@ class Registration(StrictModel):
     architecture: str = Field(max_length=64)
     username: str = Field(max_length=255)
     agent_version: str = Field(max_length=32)
-    capabilities: list[Action] = Field(max_length=4)
+    capabilities: list[Action] = Field(max_length=12)
+    approval_timeout: int = Field(default=0, ge=0, le=60)
+    applications: list[Application] | None = Field(default=None, max_length=1024)
 
 
 class CommandRequest(StrictModel):
@@ -30,6 +38,7 @@ class CommandRequest(StrictModel):
 class CommandMessage(CommandRequest):
     type: Literal["command"] = "command"
     command_id: str
+    expires_at: float | None = Field(default=None, gt=0, allow_inf_nan=False)
 
 
 class CommandResult(StrictModel):
@@ -64,10 +73,58 @@ class PathPayload(StrictModel):
 
 
 class AppPayload(StrictModel):
-    app_id: Literal["vscode", "browser"]
+    app_id: str = Field(min_length=1, max_length=128, pattern=r'^[A-Za-z0-9_.-]+$')
+
+
+class ApplicationTarget(StrictModel):
+    device_id: str | None = Field(default=None, max_length=128)
+    device_name: str | None = Field(default=None, max_length=255)
+
+
+class OpenApplication(ApplicationTarget):
+    app_name: str = Field(min_length=1, max_length=255)
+
+
+class WorkspaceFilesPayload(StrictModel):
+    workspace_id: str = Field(pattern=r'^[a-f0-9-]{36}$')
+    operation: Literal['list', 'read', 'write', 'history']
+    path: str = Field(default='', max_length=512)
+    content_base64: str = Field(default='', max_length=14000000)
+    expected_hash: str = Field(default='', max_length=64)
+    version: str = Field(default='', max_length=64)
+
+
+class SearchFilesPayload(StrictModel):
+    query: str = Field(min_length=1, max_length=255)
+
+
+class ReadFilePayload(StrictModel):
+    path: str = Field(min_length=1, max_length=4096)
+
+
+class RunCommandPayload(StrictModel):
+    command: str = Field(min_length=1, max_length=8192)
+    root_id: str = Field(default='', max_length=24, pattern=r'^[a-f0-9]*$')
+    cwd: str = Field(default='.', min_length=1, max_length=512)
+    timeout_seconds: int = Field(default=30, ge=1, le=120)
+
+    @field_validator('command', 'cwd')
+    @classmethod
+    def no_nul(cls, value):
+        if '\0' in value:
+            raise ValueError('NUL is not allowed')
+        return value
+
+
+class RunDeviceCommand(RunCommandPayload):
+    device_id: str | None = Field(default=None, max_length=128)
+    device_name: str | None = Field(default=None, max_length=255)
 
 
 PAYLOAD_SCHEMAS = {
+    "run_command": RunCommandPayload, "command_access": EmptyPayload,
+    "workspace_files": WorkspaceFilesPayload, "search_files": SearchFilesPayload, "read_file": ReadFilePayload,
     "system_info": EmptyPayload, "open_url": URLPayload,
     "open_path": PathPayload, "open_app": AppPayload,
+    "close_app": AppPayload, "minimize_app": AppPayload, "capture_screen": EmptyPayload,
 }

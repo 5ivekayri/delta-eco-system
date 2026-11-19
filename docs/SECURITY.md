@@ -19,3 +19,15 @@ LLM selects registered, enabled tools. The registry validates local arguments wi
 ## Logs and voice
 
 Foundation request logs contain request ID, service ID, path, method, duration and success. They exclude authorization headers and bodies. Voice input enforces a bounded HTTP/multipart body and decoded duration, ignores user-supplied file paths, closes temporary uploads and runs local inference with one job at a time. Audio is not retained; transcript text is persisted and is sent to the configured LLM. Whisper models are provisioned explicitly, never downloaded during inference. Mock STT is an explicit test mode, never a fallback. History and activity contain personal content; retention/export controls are future work and should be documented before multi-user use.
+
+## Approved Linux execution exception — 2026-11-15
+
+The original no-shell MVP boundary now has one explicit exception: run_command on
+a Linux desktop with a separate saved local grant. Core never executes it. The
+ordinary app/window Full Access does not authorize it. Observe has fixed diagnostic
+argument vectors; workspace uses a bubblewrap namespace with only the approved
+project writable; user is explicitly broad access. No global root grant or SSH
+service is introduced. See DESKTOP_AGENT.md for concrete limits and retention.
+A writable project may contain executable scripts/configuration; only select
+projects whose entire contents can be exposed and modified. Local socket files or
+other preexisting IPC endpoints inside a granted folder also remain trusted input.

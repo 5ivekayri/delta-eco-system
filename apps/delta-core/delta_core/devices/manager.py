@@ -1,4 +1,5 @@
 import asyncio
+import time
 from dataclasses import dataclass, field
 from datetime import timedelta
 from uuid import uuid4
@@ -17,6 +18,8 @@ from .models import Device
 @dataclass
 class Connection:
     socket: WebSocket
+    approval_timeout: int = 0
+    applications: list[dict] | None = None
     pending: dict[str, asyncio.Future] = field(default_factory=dict)
     send_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
@@ -38,7 +41,7 @@ class DeviceManager:
             if device is None:
                 device = Device()
                 session.add(device)
-            for key, value in registration.model_dump(exclude={"type"}).items():
+            for key, value in registration.model_dump(exclude={"type", "approval_timeout", "applications"}).items():
                 setattr(device, key, value)
             device.status = "online"
             device.last_seen = utcnow()
@@ -47,7 +50,8 @@ class DeviceManager:
             record_event(session, "DEVICE_CONNECTED", f"{device.display_name} connected", device_id=device_id)
             session.commit()
         previous = self.connections.get(device_id)
-        connection = Connection(socket)
+        connection = Connection(socket, approval_timeout=registration.approval_timeout,
+            applications=None if registration.applications is None else [a.model_dump() for a in registration.applications])
         self.connections[device_id] = connection
         if previous:
             self.fail_pending(previous, "Device reconnected")
@@ -114,13 +118,18 @@ class DeviceManager:
         future = asyncio.get_running_loop().create_future()
         connection.pending[command_id] = future
         message = {"type": "command", "command_id": command_id, "action": request.action, "payload": payload}
+        timeout = self.settings.command_timeout + connection.approval_timeout
+        if request.action == 'run_command':
+            timeout = payload['timeout_seconds'] + connection.approval_timeout + 5
+        if connection.approval_timeout or request.action == 'run_command':
+            message['expires_at'] = time.time() + timeout
         with Session(self.engine) as session:
-            record_event(session, "COMMAND_SENT", request.action, device_id=device_id, details=message)
+            record_event(session, "COMMAND_SENT", request.action, device_id=device_id, details=({**message, 'payload': {'operation': payload.get('operation'), 'path': payload.get('path'), 'content_redacted': True}} if request.action in {'workspace_files','read_file','search_files','run_command'} else message))
             session.commit()
         try:
             async with connection.send_lock:
                 await connection.socket.send_json(message)
-            result = await asyncio.wait_for(future, timeout=self.settings.command_timeout)
+            result = await asyncio.wait_for(future, timeout=timeout)
         except asyncio.TimeoutError:
             result = {"command_id": command_id, "success": False, "message": "Command timed out; outcome unknown",
                       "error_code": "COMMAND_TIMEOUT"}
@@ -129,7 +138,7 @@ class DeviceManager:
         finally:
             connection.pending.pop(command_id, None)
         with Session(self.engine) as session:
-            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=result)
+            record_event(session, "COMMAND_COMPLETED", result["message"], device_id=device_id, details=({**result, 'data': {'image_redacted': True}} if request.action in {'capture_screen','workspace_files','read_file','search_files','run_command'} else result))
             session.commit()
         return result
 

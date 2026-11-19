@@ -32,10 +32,14 @@ def configure_app(app: FastAPI, settings: Settings) -> None:
     @app.middleware("http")
     async def authenticate_and_log(request: Request, call_next):
         request_id = str(uuid4())
+        request.state.request_id = request_id
         start = time.monotonic()
         if request.url.path.startswith("/api/"):
             supplied = request.headers.get("authorization", "")
-            if not hmac.compare_digest(supplied, f"Bearer {settings.delta_token}"):
+            if getattr(app.state, "account_authorizer", None):
+                denied = await app.state.account_authorizer(request)
+                if denied is not None: return denied
+            elif not hmac.compare_digest(supplied, f"Bearer {settings.delta_token}"):
                 return JSONResponse(status_code=401, content={
                     "success": False, "error_code": "UNAUTHORIZED",
                     "message": "A valid development token is required",

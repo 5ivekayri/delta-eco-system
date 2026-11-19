@@ -76,6 +76,10 @@ class LocalIntentRouter:
             return re.fullmatch(pattern, text, re.I)
         def decision(name, arguments=None, slots=None):
             return IntentDecision(ToolCall(name=name, arguments=arguments or {}), .99, slots or {})
+        if match(r'(?:покажи|перечисли|показать) (?:все )?сервисы|список сервисов'):
+            return decision('services.list')
+        if match(r'(?:покажи|перечисли|показать) (?:все )?(?:рабочие )?пространства|список (?:рабочих )?пространств'):
+            return decision('workspaces.list')
         if match(r'(?:(?:покажи|перечисли|показать) (?:все |подключенные |подключённые )?(?:устройства|компьютеры)|'
                  r'(?:покажи|показать) устройство|'
                  r'список (?:устройств|компьютеров)|какие (?:устройства|компьютеры) (?:сейчас )?подключены)'):
